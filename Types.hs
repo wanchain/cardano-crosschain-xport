@@ -196,6 +196,15 @@ instance PlutusTx.Prelude.Eq MsgAddress where
     (LocalAddress a1) == (LocalAddress a2) = (a1 == a2)
     _ == _ = False
 
+data FunctionCallData = FunctionCallData
+  {
+    functionName :: BuiltinByteString
+    , functionArgs :: BuiltinByteString
+  }deriving (Show)
+
+instance PlutusTx.Prelude.Eq FunctionCallData where
+    {-# INLINABLE (==) #-}
+    (FunctionCallData a1 b1 ) == (FunctionCallData a2 b2) = (a1 == a2) && (b1 == b2)
 
 data CrossMsgData = CrossMsgData
   {
@@ -204,8 +213,11 @@ data CrossMsgData = CrossMsgData
     , sourceContract :: MsgAddress --BuiltinByteString
     , targetChainId :: Integer
     , targetContract :: MsgAddress --Address
-    , functionCallData :: BuiltinByteString
+    , functionCallData :: FunctionCallData
   }deriving (Show)
+
+PlutusTx.makeIsDataIndexed ''FunctionCallData [('FunctionCallData, 0)]
+PlutusTx.makeLift ''FunctionCallData
 
 PlutusTx.makeIsDataIndexed ''MsgAddress [('ForeignAddress, 0), ('LocalAddress, 1)]
 PlutusTx.makeLift ''MsgAddress

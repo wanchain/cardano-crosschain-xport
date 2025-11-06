@@ -72,7 +72,7 @@ import Plutus.V2.Ledger.Contexts as V2
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import Plutus.V1.Ledger.Tx
 import CrossChain.Types2 
-import CrossChain.Types (GroupNFTTokenInfo (..), InboundMintCheckInfo (..), GroupAdminNFTCheckTokenInfo (..),CrossMsgData (..), ParamType (..),GroupInfoParams (..),NonsenseDatum (..), AdminNftTokenInfo (..), CheckTokenInfo (..), scriptOutputsAt', MsgAddress (..))
+import CrossChain.Types (GroupNFTTokenInfo (..), InboundMintCheckInfo (..), GroupAdminNFTCheckTokenInfo (..),CrossMsgData (..), ParamType (..),GroupInfoParams (..),NonsenseDatum (..), AdminNftTokenInfo (..), CheckTokenInfo (..), scriptOutputsAt', MsgAddress (..), getGroupInfoParams)
 import Plutus.Script.Utils.V2.Address (mkValidatorAddress)
 -- ===================================================
 -- import Plutus.V1.Ledger.Value

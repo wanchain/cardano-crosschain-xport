@@ -246,21 +246,21 @@ PlutusTx.makeIsDataIndexed ''StoremanScriptContext [('StoremanScriptContext, 0)]
 --     ('Certifying, 3)
 --   ]
 
-{-# INLINABLE getGroupInfoParams #-}
-getGroupInfoParams :: GroupInfoParams -> ParamType -> BuiltinByteString
-getGroupInfoParams (GroupInfoParams params) typeId = case typeId of
-    Version -> params !! 0
-    Admin -> params !! 1
-    GPK -> params !! 2
-    BalanceWorker -> params !! 3
-    TreasuryCheckVH -> params !! 4
-    OracleWorker -> params !! 5
-    MintCheckVH -> params !! 6
-    StkVh -> params !! 7
-    StakeCheckVH -> params !! 8
-    NFTRefHolderVH -> params !! 9
-    NFTTreasuryCheckVH -> params !! 10
-    NFTMintCheckVH ->params !! 11
+-- {-# INLINABLE getGroupInfoParams #-}
+-- getGroupInfoParams :: GroupInfoParams -> ParamType -> BuiltinByteString
+-- getGroupInfoParams (GroupInfoParams params) typeId = case typeId of
+--     Version -> params !! 0
+--     Admin -> params !! 1
+--     GPK -> params !! 2
+--     BalanceWorker -> params !! 3
+--     TreasuryCheckVH -> params !! 4
+--     OracleWorker -> params !! 5
+--     MintCheckVH -> params !! 6
+--     StkVh -> params !! 7
+--     StakeCheckVH -> params !! 8
+--     NFTRefHolderVH -> params !! 9
+--     NFTTreasuryCheckVH -> params !! 10
+--     NFTMintCheckVH ->params !! 11
 
 
 {-# INLINABLE packBool #-}
