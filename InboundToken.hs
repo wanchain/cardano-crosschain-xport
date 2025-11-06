@@ -12,10 +12,10 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE NamedFieldPuns       #-}
 
-module CrossChain.MappingToken
-  ( mappingTokenScript
-  , mappingTokenScriptShortBs
-  , mappingTokenCurSymbol
+module CrossChain.InboundToken
+  ( inboundTokenScript
+  , inboundTokenScriptShortBs
+  , inboundTokenCurSymbol
   -- , CheckTokenInfo (..)
   ) where
 
@@ -80,8 +80,8 @@ policy oref = V2.mkMintingPolicyScript $ $$(PlutusTx.compile [|| \c -> V2.mkUnty
     `PlutusTx.applyCode` PlutusTx.liftCode oref
 
 
-mappingTokenCurSymbol :: CheckTokenInfo -> CurrencySymbol
-mappingTokenCurSymbol = scriptCurrencySymbol . policy
+inboundTokenCurSymbol :: CheckTokenInfo -> CurrencySymbol
+inboundTokenCurSymbol = scriptCurrencySymbol . policy
 
 plutusScript :: CheckTokenInfo -> V2.Script
 plutusScript = V2.unMintingPolicyScript . policy
@@ -92,8 +92,8 @@ validator = V2.Validator . plutusScript
 scriptAsCbor :: CheckTokenInfo -> LBS.ByteString
 scriptAsCbor = serialise . validator
 
-mappingTokenScript :: CheckTokenInfo -> PlutusScript PlutusScriptV2
-mappingTokenScript mgrData = PlutusScriptSerialised . SBS.toShort $ LBS.toStrict (scriptAsCbor mgrData)
+inboundTokenScript :: CheckTokenInfo -> PlutusScript PlutusScriptV2
+inboundTokenScript mgrData = PlutusScriptSerialised . SBS.toShort $ LBS.toStrict (scriptAsCbor mgrData)
 
-mappingTokenScriptShortBs :: CheckTokenInfo -> SBS.ShortByteString
-mappingTokenScriptShortBs mgrData = SBS.toShort . LBS.toStrict $ (scriptAsCbor mgrData)
+inboundTokenScriptShortBs :: CheckTokenInfo -> SBS.ShortByteString
+inboundTokenScriptShortBs mgrData = SBS.toShort . LBS.toStrict $ (scriptAsCbor mgrData)
