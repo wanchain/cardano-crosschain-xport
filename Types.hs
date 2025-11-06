@@ -188,11 +188,11 @@ data InboundMintCheckInfo = InboundMintCheckInfo
     , mintTokenName :: TokenName
   } deriving  (Generic, PlutusTx.Prelude.Eq)
 
-data MsgAddress = ForeinAddress BuiltinByteString | LocalAddress Address deriving (Show)
+data MsgAddress = ForeignAddress BuiltinByteString | LocalAddress Address deriving (Show)
 
 instance PlutusTx.Prelude.Eq MsgAddress where
     {-# INLINABLE (==) #-}
-    (ForeinAddress a1) == (ForeinAddress a2) = (a1 == a2)
+    (ForeignAddress a1) == (ForeignAddress a2) = (a1 == a2)
     (LocalAddress a1) == (LocalAddress a2) = (a1 == a2)
     _ == _ = False
 
@@ -207,7 +207,7 @@ data CrossMsgData = CrossMsgData
     , functionCallData :: BuiltinByteString
   }deriving (Show)
 
-PlutusTx.makeIsDataIndexed ''MsgAddress [('ForeinAddress, 0), ('LocalAddress, 1)]
+PlutusTx.makeIsDataIndexed ''MsgAddress [('ForeignAddress, 0), ('LocalAddress, 1)]
 PlutusTx.makeLift ''MsgAddress
 
 -- PlutusTx.unstableMakeIsData ''CrossMsgData

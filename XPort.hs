@@ -21,12 +21,12 @@
 -- {-# OPTIONS_GHC -fplugin-opt PlutusTx.Plugin:profile-all #-}
 -- {-# OPTIONS_GHC -fplugin-opt PlutusTx.Plugin:dump-uplc #-}
 
-module CrossChain.NFTRefHolder
-  ( nftRefHolderScript
-  -- , nftRefHolderScriptShortBs
-  ,nftRefHolderScriptHash
-  -- ,nftRefHolderScriptHashStr
-  ,nftRefHolderAddress
+module CrossChain.XPort
+  ( xPortScript
+  -- , xPortScriptShortBs
+  ,xPortScriptHash
+  -- ,xPortScriptHashStr
+  ,xPortAddress
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -125,26 +125,26 @@ validator p = Plutus.mkValidatorScript $
 script :: PubKeyHash -> Plutus.Script
 script = Plutus.unValidatorScript . validator
 
--- nftRefHolderScriptShortBs :: PubKeyHash -> SBS.ShortByteString
--- nftRefHolderScriptShortBs = SBS.toShort . LBS.toStrict $ serialise . script
+-- xPortScriptShortBs :: PubKeyHash -> SBS.ShortByteString
+-- xPortScriptShortBs = SBS.toShort . LBS.toStrict $ serialise . script
 
--- nftRefHolderScript :: PubKeyHash -> PlutusScript PlutusScriptV2
--- nftRefHolderScript = PlutusScriptSerialised . nftRefHolderScriptShortBs
+-- xPortScript :: PubKeyHash -> PlutusScript PlutusScriptV2
+-- xPortScript = PlutusScriptSerialised . xPortScriptShortBs
 
-nftRefHolderScript :: PubKeyHash ->  PlutusScript PlutusScriptV2
-nftRefHolderScript p = PlutusScriptSerialised
+xPortScript :: PubKeyHash ->  PlutusScript PlutusScriptV2
+xPortScript p = PlutusScriptSerialised
   . SBS.toShort
   . LBS.toStrict
   $ serialise 
   (script p)
 
-nftRefHolderScriptHash :: PubKeyHash -> Plutus.ValidatorHash
-nftRefHolderScriptHash = Scripts.validatorHash . validator
+xPortScriptHash :: PubKeyHash -> Plutus.ValidatorHash
+xPortScriptHash = Scripts.validatorHash . validator
 
--- nftRefHolderScriptHashStr :: PubKeyHash -> BuiltinByteString
--- nftRefHolderScriptHashStr = case PlutusTx.fromBuiltinData $ PlutusTx.toBuiltinData . nftRefHolderScriptHash of 
+-- xPortScriptHashStr :: PubKeyHash -> BuiltinByteString
+-- xPortScriptHashStr = case PlutusTx.fromBuiltinData $ PlutusTx.toBuiltinData . xPortScriptHash of 
 --   Just s -> s
 --   Nothing -> ""
 
-nftRefHolderAddress ::PubKeyHash -> Ledger.Address
-nftRefHolderAddress = mkValidatorAddress . validator
+xPortAddress ::PubKeyHash -> Ledger.Address
+xPortAddress = mkValidatorAddress . validator

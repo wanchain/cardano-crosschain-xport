@@ -64,11 +64,11 @@ groupInfoFromUtxo V2.TxOut{V2.txOutDatum=V2.OutputDatum datum} = case (V2.fromBu
 
 {-# INLINABLE mkPolicy #-}
 mkPolicy :: OutboundTokenParams -> CrossMsgData -> ScriptContext -> Bool
-mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) tokenName) inboundData@CrossMsgData{sourceContract = (LocalAddress _), targetContract=(ForeinAddress _)} ctx =
+mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) tokenName) inboundData@CrossMsgData{sourceContract = (LocalAddress s), targetContract=(ForeignAddress _)} ctx =
   if isBurn 
     then True 
   else 
-    traceIfFalse "hmm" checkOutput
+    traceIfFalse "hmm" (checkOutput  && checkInput)
   where
     info :: V2.TxInfo
     info = V2.scriptContextTxInfo ctx
@@ -85,6 +85,12 @@ mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) t
         [((V2.OutputDatum d),v)] -> 
           case V2.fromBuiltinData @CrossMsgData $ V2.getDatum d of 
             Just ibd' -> (inboundData == ibd') && (isSingleAsset v (ownCurrencySymbol ctx) tokenName)
+
+    checkInput :: Bool
+    checkInput = 
+      let sourceInputs = filter (\V2.TxInInfo{V2.txInInfoResolved= V2.TxOut{V2.txOutAddress=d}} -> d == s) (V2.txInfoInputs info)
+      in
+        (length sourceInputs) > 0
 
     isBurn :: Bool
     isBurn = case flattenValue $ V2.txInfoMint info of
