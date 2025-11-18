@@ -80,7 +80,7 @@ import CrossChain.Types
 
 {-# INLINABLE mkValidator #-} -- V2.ScriptContext
 mkValidator :: PubKeyHash -> () -> () -> V2.ScriptContext -> Bool
-mkValidator pkh _ _ ctx = -- True
+mkValidator pkh _ _ ctx =
   traceIfFalse "f" (V2.txSignedBy (V2.scriptContextTxInfo ctx)  pkh)
 --   where
 --     info :: V2.TxInfo
