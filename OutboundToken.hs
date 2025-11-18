@@ -52,10 +52,10 @@ import CrossChain.Types(CrossMsgData (..), GroupNFTTokenInfo (..), ParamType (..
 
 
 
-data InboundCheckType
-instance Scripts.ValidatorTypes InboundCheckType where
-    type instance DatumType InboundCheckType = ()
-    type instance RedeemerType InboundCheckType = CrossMsgData
+-- data InboundCheckType
+-- instance Scripts.ValidatorTypes InboundCheckType where
+--     type instance DatumType InboundCheckType = ()
+--     type instance RedeemerType InboundCheckType = ()
 
 {-# INLINABLE groupInfoFromUtxo #-}
 groupInfoFromUtxo :: V2.TxOut -> GroupInfoParams
@@ -63,12 +63,12 @@ groupInfoFromUtxo V2.TxOut{V2.txOutDatum=V2.OutputDatum datum} = case (V2.fromBu
   Just groupInfo -> groupInfo
 
 {-# INLINABLE mkPolicy #-}
-mkPolicy :: OutboundTokenParams -> CrossMsgData -> ScriptContext -> Bool
-mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) tokenName) inboundData@CrossMsgData{sourceContract = (LocalAddress s), targetContract=(ForeignAddress _)} ctx =
+mkPolicy :: OutboundTokenParams -> () -> V2.ScriptContext -> Bool
+mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) tokenName) _ ctx =
   if isBurn 
     then True 
   else 
-    traceIfFalse "hmm" (checkOutput  && checkInput)
+    traceIfFalse "hmm" checkInputAndOutput
   where
     info :: V2.TxInfo
     info = V2.scriptContextTxInfo ctx
@@ -79,15 +79,15 @@ mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) t
     outboundTokenHolder :: BuiltinByteString
     !outboundTokenHolder = getGroupInfoParams groupInfo OutboundHolderVH
 
-    checkOutput :: Bool
-    checkOutput = 
-      case scriptOutputsAt (V2.ValidatorHash outboundTokenHolder) info of
-        [((V2.OutputDatum d),v)] -> 
-          case V2.fromBuiltinData @CrossMsgData $ V2.getDatum d of 
-            Just ibd' -> (inboundData == ibd') && (isSingleAsset v (ownCurrencySymbol ctx) tokenName)
+    checkInputAndOutput :: Bool
+    checkInputAndOutput = 
+      case V2.scriptOutputsAt (V2.ValidatorHash outboundTokenHolder) info of
+        [((V2.OutputDatum d),v)] ->
+          case V2.fromBuiltinData @CrossMsgData $ V2.getDatum d of
+            Just CrossMsgData{sourceContract=LocalAddress s} -> (isSingleAsset v (ownCurrencySymbol ctx) tokenName) && (checkInput s)
 
-    checkInput :: Bool
-    checkInput = 
+    checkInput :: V2.Address -> Bool
+    checkInput s = 
       let sourceInputs = filter (\V2.TxInInfo{V2.txInInfoResolved= V2.TxOut{V2.txOutAddress=d}} -> d == s) (V2.txInfoInputs info)
       in
         (length sourceInputs) > 0

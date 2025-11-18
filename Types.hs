@@ -186,25 +186,25 @@ data InboundMintCheckInfo = InboundMintCheckInfo
   { gact :: GroupAdminNFTCheckTokenInfo
     , mintPolicy :: CurrencySymbol
     , mintTokenName :: TokenName
-  } deriving  (Generic, PlutusTx.Prelude.Eq)
+  } deriving  (Generic, Prelude.Eq)
 
-data MsgAddress = ForeignAddress BuiltinByteString | LocalAddress Address deriving (Show)
+data MsgAddress = ForeignAddress BuiltinByteString | LocalAddress Address deriving (Show, Prelude.Eq)
 
-instance PlutusTx.Prelude.Eq MsgAddress where
-    {-# INLINABLE (==) #-}
-    (ForeignAddress a1) == (ForeignAddress a2) = (a1 == a2)
-    (LocalAddress a1) == (LocalAddress a2) = (a1 == a2)
-    _ == _ = False
+-- instance PlutusTx.Prelude.Eq MsgAddress where
+--     {-# INLINABLE (==) #-}
+--     (ForeignAddress a1) == (ForeignAddress a2) = (a1 == a2)
+--     (LocalAddress a1) == (LocalAddress a2) = (a1 == a2)
+--     _ == _ = False
 
 data FunctionCallData = FunctionCallData
   {
     functionName :: BuiltinByteString
     , functionArgs :: BuiltinByteString
-  }deriving (Show)
+  }deriving (Show, Prelude.Eq)
 
-instance PlutusTx.Prelude.Eq FunctionCallData where
-    {-# INLINABLE (==) #-}
-    (FunctionCallData a1 b1 ) == (FunctionCallData a2 b2) = (a1 == a2) && (b1 == b2)
+-- instance PlutusTx.Prelude.Eq FunctionCallData where
+--     {-# INLINABLE (==) #-}
+--     (FunctionCallData a1 b1 ) == (FunctionCallData a2 b2) = (a1 == a2) && (b1 == b2)
 
 data CrossMsgData = CrossMsgData
   {
@@ -214,7 +214,7 @@ data CrossMsgData = CrossMsgData
     , targetChainId :: Integer
     , targetContract :: MsgAddress --Address
     , functionCallData :: FunctionCallData
-  }deriving (Show)
+  }deriving (Show,  Prelude.Eq)
 
 PlutusTx.makeIsDataIndexed ''FunctionCallData [('FunctionCallData, 0)]
 PlutusTx.makeLift ''FunctionCallData
@@ -227,9 +227,9 @@ PlutusTx.makeIsDataIndexed ''CrossMsgData [('CrossMsgData, 0)]
 PlutusTx.makeLift ''CrossMsgData
 
 -- 为InboundData实现PlutusTx.Eq实例
-instance PlutusTx.Prelude.Eq CrossMsgData where
-    {-# INLINABLE (==) #-}
-    (CrossMsgData a1 b1 c1 d1 e1 f1) == (CrossMsgData a2 b2 c2 d2 e2 f2) = (a1 == a2) && (b1 == b2) && (c1 == c2) && (d1 == d2) && (e1 == e2) && (f1 == f2)
+-- instance PlutusTx.Prelude.Eq CrossMsgData where
+--     {-# INLINABLE (==) #-}
+--     (CrossMsgData a1 b1 c1 d1 e1 f1) == (CrossMsgData a2 b2 c2 d2 e2 f2) = (a1 == a2) && (b1 == b2) && (c1 == c2) && (d1 == d2) && (e1 == e2) && (f1 == f2)
 
 
 data OutboundTokenParams = OutboundTokenParams

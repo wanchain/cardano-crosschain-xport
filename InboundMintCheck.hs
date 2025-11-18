@@ -36,7 +36,7 @@ module CrossChain.InboundMintCheck
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics (Generic)
 import Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV2)
-import Prelude hiding (($),(<>), (&&), (&&), (==),(||),(>=),(<=),(+),(<),(-),not,length,filter,(>),(!!),map,head,reverse,any,elem,snd,mconcat,negate,all,fst,Eq)
+import Prelude hiding (($),(<>), (&&), (&&), (==),(||),(>=),(<=),(+),(<),(-),not,length,filter,(>),(!!),map,head,reverse,any,elem,snd,mconcat,negate,all,fst)
 
 import Codec.Serialise
 import Data.ByteString.Lazy qualified as LBS
@@ -71,8 +71,8 @@ import Ledger.Value
 import Plutus.V2.Ledger.Contexts as V2
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import Plutus.V1.Ledger.Tx
-import CrossChain.Types2 
-import CrossChain.Types (GroupNFTTokenInfo (..), InboundMintCheckInfo (..), GroupAdminNFTCheckTokenInfo (..),CrossMsgData (..), ParamType (..),GroupInfoParams (..),NonsenseDatum (..), AdminNftTokenInfo (..), CheckTokenInfo (..), scriptOutputsAt', MsgAddress (..), getGroupInfoParams)
+-- import CrossChain.Types2 
+import CrossChain.Types -- (GroupNFTTokenInfo (..), InboundMintCheckInfo (..), GroupAdminNFTCheckTokenInfo (..),CrossMsgData (..), ParamType (..),GroupInfoParams (..),NonsenseDatum (..), AdminNftTokenInfo (..), CheckTokenInfo (..), scriptOutputsAt2, MsgAddress (..), getGroupInfo, getGroupInfoParams)
 import Plutus.Script.Utils.V2.Address (mkValidatorAddress)
 -- ===================================================
 -- import Plutus.V1.Ledger.Value
@@ -90,7 +90,7 @@ data InboundProofData = InboundProofData
     , ttl :: Integer
     , mode :: Integer
     , nonce :: TxOutRef
-  }deriving (Eq, Show)
+  }deriving (Show, Prelude.Eq)
 
 PlutusTx.unstableMakeIsData ''InboundProofData
 PlutusTx.makeLift ''InboundProofData
@@ -100,7 +100,7 @@ data InboundProof = InboundProof
   {
     proofData :: InboundProofData
     , signature :: BuiltinByteString
-  }deriving (Eq, Show)
+  }deriving ( Show, Prelude.Eq)
 
 
 PlutusTx.unstableMakeIsData ''InboundProof
@@ -108,7 +108,7 @@ PlutusTx.makeLift ''InboundProof
 
 
 data InboundCheckRedeemer = BurnInboundCheckToken | InboundCheckRedeemer InboundProof
-    deriving (Show, Eq)
+    deriving (Show, Prelude.Eq)
 PlutusTx.unstableMakeIsData ''InboundCheckRedeemer
 
 
@@ -119,32 +119,32 @@ instance Scripts.ValidatorTypes InboundCheckType where
 
 
 {-# INLINABLE burnTokenCheck #-}
-burnTokenCheck :: InboundMintCheckInfo -> StoremanScriptContext -> Bool
+burnTokenCheck :: InboundMintCheckInfo -> V2.ScriptContext -> Bool
 burnTokenCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo _ (AdminNftTokenInfo adminNftSymbol adminNftName) (CheckTokenInfo checkTokenSymbol checkTokenName)) _ _) ctx = 
   traceIfFalse "a"  hasAdminNftInInput
   && traceIfFalse "b" checkOutput
   where 
-    info :: TxInfo'
-    !info = scriptContextTxInfo' ctx
+    info :: V2.TxInfo
+    !info = V2.scriptContextTxInfo ctx
 
   
     hasAdminNftInInput :: Bool
     hasAdminNftInInput = 
-      let !totalInputValue = valueSpent' info
+      let !totalInputValue = V2.valueSpent info
           !amount = valueOf totalInputValue adminNftSymbol adminNftName
       in amount == 1
 
     checkOutput :: Bool
     checkOutput = 
-      let !outputValue = valueProduced' info
+      let !outputValue = V2.valueProduced info
       in valueOf outputValue checkTokenSymbol checkTokenName == 0
 
 
 
 
 {-# INLINABLE mintSpendCheck #-}
-mintSpendCheck :: InboundMintCheckInfo -> InboundProof -> StoremanScriptContext -> Bool
-mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTTokenInfo groupInfoCurrency groupInfoTokenName) (AdminNftTokenInfo adminNftSymbol adminNftName) (CheckTokenInfo checkTokenSymbol checkTokenName)) mintPolicy mintTokenName) InboundProof{proofData = pd@InboundProofData{crossMsgData , mode, ttl, nonce}, signature} ctx = 
+mintSpendCheck :: InboundMintCheckInfo -> InboundProof -> V2.ScriptContext -> Bool
+mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTTokenInfo groupInfoCurrency groupInfoTokenName) _ (CheckTokenInfo checkTokenSymbol checkTokenName)) mintPolicy mintTokenName) (InboundProof proofData signature) ctx = -- True
   traceIfFalse "1" hasUTxO 
   && traceIfFalse "2" (amountOfCheckTokeninOwnOutput == 1) 
   && traceIfFalse "3" checkSignature
@@ -152,12 +152,12 @@ mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTToken
   && traceIfFalse "5" checkTtl
   where
     
-    info :: TxInfo'
-    !info = scriptContextTxInfo' ctx
+    info :: V2.TxInfo
+    !info = V2.scriptContextTxInfo ctx
 
     hasUTxO :: Bool
     hasUTxO = 
-      let StoremanScriptContext{scriptContextPurpose'=Spending txOutRef} = ctx in txOutRef == nonce
+      let V2.ScriptContext{V2.scriptContextPurpose=Spending txOutRef} = ctx in txOutRef == (nonce proofData)
 
     groupInfo :: GroupInfoParams
     !groupInfo = getGroupInfo info groupInfoCurrency groupInfoTokenName
@@ -169,42 +169,52 @@ mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTToken
     amountOfCheckTokeninOwnOutput = getAmountOfCheckTokeninOwnOutput ctx checkTokenSymbol checkTokenName stkVh
 
     hashRedeemer :: BuiltinByteString
-    !hashRedeemer = sha3_256 (serialiseData $ PlutusTx.toBuiltinData pd)
+    !hashRedeemer = sha3_256 (serialiseData $ PlutusTx.toBuiltinData proofData)
 
     gpk :: BuiltinByteString
     !gpk = getGroupInfoParams groupInfo GPK
 
     checkSignature :: Bool
     checkSignature -- mode pk hash signature
-      | mode == 0 = verifyEcdsaSecp256k1Signature gpk hashRedeemer signature
-      | mode == 1 = verifySchnorrSecp256k1Signature gpk hashRedeemer signature
-      | mode == 2 = verifyEd25519Signature gpk hashRedeemer signature
+      | modeT == 0 = verifyEcdsaSecp256k1Signature gpk hashRedeemer signature
+      | modeT == 1 = verifySchnorrSecp256k1Signature gpk hashRedeemer signature
+      | modeT == 2 = verifyEd25519Signature gpk hashRedeemer signature
+
+    crossMsgD :: CrossMsgData
+    crossMsgD = crossMsgData proofData
+
+    modeT :: Integer
+    !modeT = mode proofData
 
     msgConsumer :: Address
-    msgConsumer = 
-      case targetContract crossMsgData of
+    !msgConsumer = 
+      case targetContract crossMsgD of
         LocalAddress a -> a
-    
+
+    expectedDatum :: OutputDatum
+    !expectedDatum =  OutputDatum (Datum (PlutusTx.toBuiltinData crossMsgD))
+
     checkOutput :: Bool
-    checkOutput = 
-      case scriptOutputsAt2' msgConsumer info of
-        [(d,v)] -> 
-          case Plutus.fromBuiltinData @CrossMsgData $ Plutus.getDatum d of 
-            Just ibd' -> (crossMsgData == ibd') && (isSingleAsset v mintPolicy mintTokenName)
+    !checkOutput = 
+      case scriptOutputsAt2 msgConsumer info expectedDatum of
+        [v] -> (isSingleAsset v mintPolicy mintTokenName)
+  --         -- case Plutus.getDatum d of 
+  --         -- case Plutus.fromBuiltinData @CrossMsgData $ Plutus.getDatum d of 
+  --         --   Just ibd' -> True -- (crossMsgData == ibd') && (isSingleAsset v mintPolicy mintTokenName)
 
     
     checkTtl :: Bool
-    checkTtl = (Plutus.POSIXTime (ttl + 1)) `after` (txInfoValidRange' info)
+    checkTtl = (Plutus.POSIXTime ((ttl proofData) + 1)) `after` (V2.txInfoValidRange info)
 
 
 {-# INLINABLE mkValidator #-}
-mkValidator :: InboundMintCheckInfo ->() -> InboundCheckRedeemer  -> BuiltinData -> Bool
-mkValidator storeman _ redeemer rawContext = 
+mkValidator :: InboundMintCheckInfo ->() -> InboundCheckRedeemer  -> V2.ScriptContext -> Bool
+mkValidator storeman _ redeemer ctx = 
   case redeemer of
     BurnInboundCheckToken -> burnTokenCheck storeman ctx
     InboundCheckRedeemer mintCheckProof -> mintSpendCheck storeman mintCheckProof ctx
-  where
-    ctx = PlutusTx.unsafeFromBuiltinData @StoremanScriptContext rawContext
+  -- where
+  --   ctx = PlutusTx.unsafeFromBuiltinData @V2.ScriptContext rawContext
 
 
 validator :: InboundMintCheckInfo -> Scripts.Validator
@@ -212,7 +222,7 @@ validator p = Plutus.mkValidatorScript $
     $$(PlutusTx.compile [|| validatorParam ||])
         `PlutusTx.applyCode`
             PlutusTx.liftCode p
-    where validatorParam s = mkUntypedValidator' (mkValidator s)
+    where validatorParam s = PV2.mkUntypedValidator (mkValidator s)
 
 script :: InboundMintCheckInfo -> Plutus.Script
 script = unValidatorScript . validator
