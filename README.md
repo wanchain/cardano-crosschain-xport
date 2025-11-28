@@ -30,15 +30,15 @@ data CrossMsgData = CrossMsgData
   }deriving (Show, Prelude.Eq)
   ```
 
-1. taskId：Unique identifier for the message。
-2. sourceChainId：The source blockchain id of the message
-3. sourceContract：The contract address of the initiator of the message
-4. targetChainId：The destination blockchain id of the message
+1. taskId：Unique identifier for the message.
+2. sourceChainId：The source blockchain id of the message.
+3. sourceContract：The contract address of the initiator of the message.
+4. targetChainId：The destination blockchain id of the message.
 5. targetContract：The contract address of the destination of this message。
-6. gasLimit: The upper limit of gas required for the message to be executed on the target chain。
+6. gasLimit: The upper limit of gas required for the message to be executed on the target chain.
 7. functionCallData：Message execution parameters，including：
-    - functionName：The name of the function that executes the message on the target chain，encoded in ascii
-    - functionArgs：The parameters of the calling function are encoded in cbor。
+    - functionName：The name of the function that executes the message on the target chain, encoded in ascii.
+    - functionArgs：The parameters of the calling function, encoded in cbor.
 
 ### InBound Message:
 The Xport system will mint an InboundToken to the address of the third-party contract specified in the message. This Utxo containing Inbound tokens is defined as Inbound UTXO, and its datum is CrossMsgData, which is the message.The third-party is responsible for verifying the legitimacy of the Inbount Token when excuting the message, both the Inbound Token policy and token name.The token name must be the scriptHash of the targetcontract addresst.
