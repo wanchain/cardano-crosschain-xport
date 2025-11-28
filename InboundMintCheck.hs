@@ -120,7 +120,7 @@ instance Scripts.ValidatorTypes InboundCheckType where
 
 {-# INLINABLE burnTokenCheck #-}
 burnTokenCheck :: InboundMintCheckInfo -> V2.ScriptContext -> Bool
-burnTokenCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo _ (AdminNftTokenInfo adminNftSymbol adminNftName) (CheckTokenInfo checkTokenSymbol checkTokenName)) _ _) ctx = 
+burnTokenCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo _ (AdminNftTokenInfo adminNftSymbol adminNftName) (CheckTokenInfo checkTokenSymbol checkTokenName)) _) ctx = 
   traceIfFalse "a"  hasAdminNftInInput
   && traceIfFalse "b" checkOutput
   where 
@@ -144,7 +144,7 @@ burnTokenCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo _ (AdminNftTok
 
 {-# INLINABLE mintSpendCheck #-}
 mintSpendCheck :: InboundMintCheckInfo -> InboundProof -> V2.ScriptContext -> Bool
-mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTTokenInfo groupInfoCurrency groupInfoTokenName) _ (CheckTokenInfo checkTokenSymbol checkTokenName)) mintPolicy mintTokenName) (InboundProof proofData signature) ctx = -- True
+mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTTokenInfo groupInfoCurrency groupInfoTokenName) _ (CheckTokenInfo checkTokenSymbol checkTokenName)) mintPolicy) (InboundProof proofData signature) ctx = -- True
   traceIfFalse "1" hasUTxO 
   && traceIfFalse "2" (amountOfCheckTokeninOwnOutput == 1) 
   && traceIfFalse "3" checkSignature
@@ -194,10 +194,14 @@ mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTToken
     expectedDatum :: OutputDatum
     !expectedDatum =  OutputDatum (Datum (PlutusTx.toBuiltinData crossMsgD))
 
+    targetVH :: BuiltinByteString
+    !targetVH = case targetContract crossMsgD of
+      LocalAddress (Address (Plutus.ScriptCredential (ValidatorHash k)) _) -> k
+
     checkOutput :: Bool
     !checkOutput = 
       case scriptOutputsAt2 msgConsumer info expectedDatum of
-        [v] -> (isSingleAsset v mintPolicy mintTokenName)
+        [v] -> (isSingleAsset v mintPolicy (TokenName targetVH))
   --         -- case Plutus.getDatum d of 
   --         -- case Plutus.fromBuiltinData @CrossMsgData $ Plutus.getDatum d of 
   --         --   Just ibd' -> True -- (crossMsgData == ibd') && (isSingleAsset v mintPolicy mintTokenName)

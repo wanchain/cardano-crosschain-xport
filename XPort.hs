@@ -27,6 +27,7 @@ module CrossChain.XPort
   ,xPortScriptHash
   -- ,xPortScriptHashStr
   ,xPortAddress
+  ,KeyParam (..)
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -77,10 +78,20 @@ import Ledger hiding (validatorHash) --singleton
 import CrossChain.Types 
 
 
+data KeyParam
+  = KeyParam
+      { groupNft :: PubKeyHash
+        , nonce :: Integer
+      } deriving stock (Generic)
+        -- deriving anyclass (ToJSON, FromJSON)
+
+PlutusTx.unstableMakeIsData ''KeyParam
+PlutusTx.makeLift ''KeyParam
+
 
 {-# INLINABLE mkValidator #-} -- V2.ScriptContext
-mkValidator :: PubKeyHash -> () -> () -> V2.ScriptContext -> Bool
-mkValidator pkh _ _ ctx =
+mkValidator :: KeyParam -> () -> () -> V2.ScriptContext -> Bool
+mkValidator (KeyParam pkh _) _ _ ctx = 
   traceIfFalse "f" (V2.txSignedBy (V2.scriptContextTxInfo ctx)  pkh)
 --   where
 --     info :: V2.TxInfo
@@ -111,7 +122,7 @@ mkValidator pkh _ _ ctx =
 --     where
 --         wrap = PV2.mkUntypedValidator
 
-validator :: PubKeyHash -> Scripts.Validator
+validator :: KeyParam -> Scripts.Validator
 validator p = Plutus.mkValidatorScript $
     $$(PlutusTx.compile [|| validatorParam ||])
         `PlutusTx.applyCode`
@@ -122,23 +133,23 @@ validator p = Plutus.mkValidatorScript $
 -- validator :: PubKeyHash -> Validator
 -- validator = PV2.validatorScript . typedValidator
 
-script :: PubKeyHash -> Plutus.Script
+script :: KeyParam -> Plutus.Script
 script = Plutus.unValidatorScript . validator
 
--- xPortScriptShortBs :: PubKeyHash -> SBS.ShortByteString
+-- xPortScriptShortBs :: KeyParam -> SBS.ShortByteString
 -- xPortScriptShortBs = SBS.toShort . LBS.toStrict $ serialise . script
 
--- xPortScript :: PubKeyHash -> PlutusScript PlutusScriptV2
+-- xPortScript :: KeyParam -> PlutusScript PlutusScriptV2
 -- xPortScript = PlutusScriptSerialised . xPortScriptShortBs
 
-xPortScript :: PubKeyHash ->  PlutusScript PlutusScriptV2
+xPortScript :: KeyParam ->  PlutusScript PlutusScriptV2
 xPortScript p = PlutusScriptSerialised
   . SBS.toShort
   . LBS.toStrict
   $ serialise 
   (script p)
 
-xPortScriptHash :: PubKeyHash -> Plutus.ValidatorHash
+xPortScriptHash :: KeyParam -> Plutus.ValidatorHash
 xPortScriptHash = Scripts.validatorHash . validator
 
 -- xPortScriptHashStr :: PubKeyHash -> BuiltinByteString
@@ -146,5 +157,5 @@ xPortScriptHash = Scripts.validatorHash . validator
 --   Just s -> s
 --   Nothing -> ""
 
-xPortAddress ::PubKeyHash -> Ledger.Address
+xPortAddress ::KeyParam -> Ledger.Address
 xPortAddress = mkValidatorAddress . validator

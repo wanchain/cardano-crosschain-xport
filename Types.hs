@@ -185,7 +185,7 @@ data CrossDatum = CrossDatum
 data InboundMintCheckInfo = InboundMintCheckInfo
   { gact :: GroupAdminNFTCheckTokenInfo
     , mintPolicy :: CurrencySymbol
-    , mintTokenName :: TokenName
+    -- , mintTokenName :: TokenName
   } deriving  (Generic, Prelude.Eq)
 
 data MsgAddress = ForeignAddress BuiltinByteString | LocalAddress Address deriving (Show, Prelude.Eq)
@@ -213,6 +213,7 @@ data CrossMsgData = CrossMsgData
     , sourceContract :: MsgAddress --BuiltinByteString
     , targetChainId :: Integer
     , targetContract :: MsgAddress --Address
+    , gasLimit :: Integer
     , functionCallData :: FunctionCallData
   }deriving (Show,  Prelude.Eq)
 
