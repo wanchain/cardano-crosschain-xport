@@ -41,10 +41,11 @@ data CrossMsgData = CrossMsgData
     functionArgs：The parameters of the calling function are encoded in cbor。
 
 ### InBound Message:
-The Xport system will mint an InboundToken to the address of the third-party contract specified in the message. This Utxo containing Inbound tokens is defined as Inbound UTXO, and its datum is CrossMsgData, which is the message.
+The Xport system will mint an InboundToken to the address of the third-party contract specified in the message. This Utxo containing Inbound tokens is defined as Inbound UTXO, and its datum is CrossMsgData, which is the message.The third-party is responsible for verifying the legitimacy of the Inbount Token when excuting the message, both the Inbound Token policy and token name.The token name must be the scriptHash of the targetcontract addresst.
 ### OutBound Message:
 When a third-party application initiates an Outbound message:
 1. Should call the OutboundToken contract to Mint an OutboundToken to the address of the XPort contract. This output is defined as an Outbound UTXO.
 2. The datum of an Outbound UTXO is CrossMsgData, which is the message. The taskId is a fixed empty string, and the final value of taskId will be generated based on the outbound Tx hash after tx submited.
 3. The contract of the third-party application is responsible for verifying the legitimacy of the datum of the Outbound UTXO, including the source, destination, gasLimit, functionCallData, etc. of the message.
+
 
