@@ -65,10 +65,10 @@ groupInfoFromUtxo V2.TxOut{V2.txOutDatum=V2.OutputDatum datum} = case (V2.fromBu
 {-# INLINABLE mkPolicy #-}
 mkPolicy :: OutboundTokenParams -> () -> V2.ScriptContext -> Bool
 mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) tokenName) _ ctx =
-  if isBurn 
+  if mintValue < 0
     then True 
   else 
-    traceIfFalse "hmm" checkInputAndOutput
+    traceIfFalse "hmm" (checkInputAndOutput && (mintValue == 1))
   where
     info :: V2.TxInfo
     info = V2.scriptContextTxInfo ctx
@@ -84,7 +84,7 @@ mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) t
       case V2.scriptOutputsAt (V2.ValidatorHash outboundTokenHolder) info of
         [((V2.OutputDatum d),v)] ->
           case V2.fromBuiltinData @CrossMsgData $ V2.getDatum d of
-            Just CrossMsgData{sourceContract=LocalAddress s} -> (isSingleAsset v (ownCurrencySymbol ctx) tokenName) && (checkInput s)
+            Just CrossMsgData{sourceContract=LocalAddress s} -> (isSingleAsset v (ownCurrencySymbol ctx) tokenName)  && (checkInput s)
 
     checkInput :: V2.Address -> Bool
     checkInput s = 
@@ -92,9 +92,9 @@ mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) t
       in
         (length sourceInputs) > 0
 
-    isBurn :: Bool
-    isBurn = case flattenValue $ V2.txInfoMint info of
-        [(symbol,_,a)] -> (symbol == ownCurrencySymbol ctx) && (a < 0)
+    mintValue :: Integer
+    mintValue = valueOf (V2.txInfoMint info) (ownCurrencySymbol ctx) tokenName
+        -- [(symbol,_,a)] -> (symbol == ownCurrencySymbol ctx) && (a < 0)
 
 policy :: OutboundTokenParams -> V2.MintingPolicy
 policy oref = V2.mkMintingPolicyScript $ $$(PlutusTx.compile [|| \c -> V2.mkUntypedMintingPolicy (mkPolicy c)  ||]) 

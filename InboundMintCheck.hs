@@ -150,6 +150,7 @@ mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTToken
   && traceIfFalse "3" checkSignature
   && traceIfFalse "4" checkOutput 
   && traceIfFalse "5" checkTtl
+  && traceIfFalse "6"( mintValue == 1)
   where
     
     info :: V2.TxInfo
@@ -206,7 +207,9 @@ mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTToken
   --         -- case Plutus.fromBuiltinData @CrossMsgData $ Plutus.getDatum d of 
   --         --   Just ibd' -> True -- (crossMsgData == ibd') && (isSingleAsset v mintPolicy mintTokenName)
 
-    
+    mintValue :: Integer
+    mintValue = valueOf (V2.txInfoMint info) mintPolicy (TokenName targetVH)
+
     checkTtl :: Bool
     checkTtl = (Plutus.POSIXTime ((ttl proofData) + 1)) `after` (V2.txInfoValidRange info)
 
