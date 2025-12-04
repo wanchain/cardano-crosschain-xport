@@ -30,22 +30,39 @@ data CrossMsgData = CrossMsgData
   }deriving (Show, Prelude.Eq)
   ```
 
-1. taskId：Unique identifier for the message.
+1. taskId：Unique identifier for the message. Note that for outbound TX scenario, the taskId is a fixed empty string, and the final value will be generated based on the outbound Tx hash by offchain agent.
 2. sourceChainId：The source blockchain id of the message.
 3. sourceContract：The contract address of the initiator of the message.
 4. targetChainId：The destination blockchain id of the message.
 5. targetContract：The contract address of the destination of this message。
-6. gasLimit: The upper limit of gas required for the message to be executed on the target chain.
+6. gasLimit: The upper limit of gas required for the message to be executed on the target chain. Note that for inbound TX scenario, it has no meaning.
 7. functionCallData：Message execution parameters，including：
-    - functionName：The name of the function that executes the message on the target chain, encoded in ascii.
-    - functionArgs：The parameters of the calling function, encoded in cbor.
+    - functionName：The name of the function that executes the message on the target chain, encoded in ascii. Note that it is fixed string of wmbReceive.
+    - functionArgs：The parameters of the calling function, encoded in cbor. Note that Note that it is content is business specific and DApp can customize it accordingly.
 
 ### InBound Message:
-The Xport system will mint an InboundToken to the address of the third-party contract specified in the message. This Utxo containing Inbound tokens is defined as Inbound UTXO, and its datum is CrossMsgData, which is the message.The third-party is responsible for verifying the legitimacy of the Inbount Token when excuting the message, both the Inbound Token policy and token name.The token name must be the scriptHash of the targetcontract addresst.
+The Xport system will mint an InboundToken to the address of the third-party contract (targetContract, as DAppIn) specified in the message. 
+
+The InBound TX structure will basically contain:  
+- Token MintFlag with InBoundToken, where the token name must be the scriptHash of the targetcontract addresst.
+- Input CheckToken@InBoundMintCheck, which ensures the storeman MPC proof check.
+- Output InBoundToken@DAppIn with CrossMsgData datum.
+
+This InBoundToken@DAppIn shall be consumed by targetContract/DAppIn and burnt for business execution.
+
 ### OutBound Message:
-When a third-party application initiates an Outbound message:
-1. Should call the OutboundToken contract to Mint an OutboundToken to the address of the XPort contract. This output is defined as an Outbound UTXO.
-2. The datum of an Outbound UTXO is CrossMsgData, which is the message. The taskId is a fixed empty string, and the final value of taskId will be generated based on the outbound Tx hash after tx submited.
-3. The contract of the third-party application is responsible for verifying the legitimacy of the datum of the Outbound UTXO, including the source, destination, gasLimit, functionCallData, etc. of the message.
+The third-party application (sourceContract, as DAppOut) will mint an OutboundToken for message crosschain.
 
+The OutBound TX structure will basically contain:  
+- Token Mint Flag with OutBoundToken, where the mint policy shall check that input UTXO@DAppOut matches output OutBoundToken@XPort.
+- Input UTXO@DAppOut, which ensure correct output OutBoundToken@XPort.
+- Output OutBoundToken@XPort with CrossMsgData datum.
 
+### Bussiness Customization for functionArgs in CrossMsgData
+- To match codec between Cardano and EVM, the functionArgs shall be encoded with CBOR and its EVM peer shall encode/decode CBOR accordingly.
+- To support concurrency, the functionArgs can contain a array of multiple messages as business intent.
+
+### References
+For XPort crosschain in EVM, you can check EVM XPort accordingly.
+
+https://github.com/wanchain/message-bridge-contracts/blob/feat/non-evm/contracts/WmbGateway.sol
