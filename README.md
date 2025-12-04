@@ -61,3 +61,8 @@ The OutBound TX structure will basically contain:
 ### Bussiness Customization for functionArgs in CrossMsgData
 - To match codec between Cardano and EVM, the functionArgs shall be encoded with CBOR and its EVM peer shall encode/decode CBOR accordingly.
 - To support concurrency, the functionArgs can contain a array of multiple messages as business intent.
+
+### References
+For XPort crosschain in EVM, you can check EVM XPort accordingly.
+
+https://github.com/wanchain/message-bridge-contracts/blob/feat/non-evm/contracts/WmbGateway.sol
