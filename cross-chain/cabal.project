@@ -1,0 +1,14 @@
+index-state: 2022-05-18T00:00:00Z
+
+packages: ./.
+
+-- You never, ever, want this.
+write-ghc-environment-files: never
+
+-- Always build tests and benchmarks.
+tests: true
+benchmarks: true
+allow-newer:
+  *:aeson,
+  monoidal-containers:aeson,
+  size-based:template-haskell
