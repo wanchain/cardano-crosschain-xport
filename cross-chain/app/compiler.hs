@@ -543,52 +543,52 @@ main = do
   putStrLn $ "address: " ++ (Char8.unpack (Base16.encode $ Builtins.fromBuiltin (Builtins.serialiseData . toBuiltinData $  treasuryCheckAddress storeman)))
   putStrLn $ "TreasuryCheck VH:" ++ (Char8.unpack (Base16.encode $ Builtins.fromBuiltin (Builtins.serialiseData . toBuiltinData $  treasuryCheckScriptHash storeman)))
 
-  _ <- writeRedeemer (datadir </>"./utxoRef.json") (PlutusTx.toBuiltinData utxoRef)
+  -- _ <- writeRedeemer (datadir </>"./utxoRef.json") (PlutusTx.toBuiltinData utxoRef)
 
-  _ <- writeRedeemer (datadir </>"./value.json") (PlutusTx.toBuiltinData vv)
+  -- _ <- writeRedeemer (datadir </>"./value.json") (PlutusTx.toBuiltinData vv)
 
 
-  -- putStrLn "Schnorr secp256k1"
-  -- putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkeyB')
-  -- putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sigB)
+  -- -- putStrLn "Schnorr secp256k1"
+  -- -- putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkeyB')
+  -- -- putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sigB)
 
-  _ <- writeRedeemer (datadir </>"./treasuryCheckAddress.json") (PlutusTx.toBuiltinData  (treasuryCheckAddress storeman))
+  -- _ <- writeRedeemer (datadir </>"./treasuryCheckAddress.json") (PlutusTx.toBuiltinData  (treasuryCheckAddress storeman))
 
-  -- _ <- writeRedeemer (datadir </> "./groupNFTSymbol.json") (PlutusTx.toBuiltinData treasuryCheckTokenSymbol)
-  _ <- writeRedeemer (datadir </>"./groupTokenInfo.json") (PlutusTx.toBuiltinData treasuryCheckTokenName)
-  _ <- writeRedeemer (datadir </>"./storeman.json") (PlutusTx.toBuiltinData storeman)
-  -- _ <- writeRedeemer (datadir </>"./treasuryRedeemer.json") (PlutusTx.toBuiltinData treasuryRedeemer)
-  -- _ <- writeRedeemer (datadir </>"./checkRedeemer.json") (PlutusTx.toBuiltinData checkRedeemer)
-  _ <- writeRedeemer (datadir </>"./originData.json") (PlutusTx.toBuiltinData originData)
-  _ <- writeRedeemer (datadir </>"./amount.json") (PlutusTx.toBuiltinData $ packInteger amount)
-  _ <- writeRedeemer (datadir </>"./adaAmount.json") (PlutusTx.toBuiltinData $ packInteger adaAmount)
-  _ <- writeRedeemer (datadir </>"./ScriptCredential.json") (PlutusTx.toBuiltinData s)
-  _ <- writeRedeemer (datadir </>"./Action_Update.json") (PlutusTx.toBuiltinData Admin)
-  _ <- writeRedeemer (datadir </>"./Address.json") (PlutusTx.toBuiltinData  (adminNFTHolderAddress adminNft)) 
-  _ <- writeRedeemer (datadir </>"./stakeCheckRedeemer.json") (PlutusTx.toBuiltinData  SpendU)
+  -- -- _ <- writeRedeemer (datadir </> "./groupNFTSymbol.json") (PlutusTx.toBuiltinData treasuryCheckTokenSymbol)
+  -- _ <- writeRedeemer (datadir </>"./groupTokenInfo.json") (PlutusTx.toBuiltinData treasuryCheckTokenName)
+  -- _ <- writeRedeemer (datadir </>"./storeman.json") (PlutusTx.toBuiltinData storeman)
+  -- -- _ <- writeRedeemer (datadir </>"./treasuryRedeemer.json") (PlutusTx.toBuiltinData treasuryRedeemer)
+  -- -- _ <- writeRedeemer (datadir </>"./checkRedeemer.json") (PlutusTx.toBuiltinData checkRedeemer)
+  -- _ <- writeRedeemer (datadir </>"./originData.json") (PlutusTx.toBuiltinData originData)
+  -- _ <- writeRedeemer (datadir </>"./amount.json") (PlutusTx.toBuiltinData $ packInteger amount)
+  -- _ <- writeRedeemer (datadir </>"./adaAmount.json") (PlutusTx.toBuiltinData $ packInteger adaAmount)
+  -- _ <- writeRedeemer (datadir </>"./ScriptCredential.json") (PlutusTx.toBuiltinData s)
+  -- _ <- writeRedeemer (datadir </>"./Action_Update.json") (PlutusTx.toBuiltinData Admin)
+  -- _ <- writeRedeemer (datadir </>"./Address.json") (PlutusTx.toBuiltinData  (adminNFTHolderAddress adminNft)) 
+  -- _ <- writeRedeemer (datadir </>"./stakeCheckRedeemer.json") (PlutusTx.toBuiltinData  SpendU)
 
-  _ <- writeRedeemer (datadir </>"./testAddress.json") (PlutusTx.toBuiltinData  testAddress)
-  _ <- writeRedeemer (datadir </>"./testAddress2.json") (PlutusTx.toBuiltinData  testAddress2)
-  _ <- writeRedeemer (datadir </>"./testAddress3.json") (PlutusTx.toBuiltinData  testAddress3)
+  -- _ <- writeRedeemer (datadir </>"./testAddress.json") (PlutusTx.toBuiltinData  testAddress)
+  -- _ <- writeRedeemer (datadir </>"./testAddress2.json") (PlutusTx.toBuiltinData  testAddress2)
+  -- _ <- writeRedeemer (datadir </>"./testAddress3.json") (PlutusTx.toBuiltinData  testAddress3)
 
-  _ <- writeRedeemer (datadir </>"./testOutputDatum.json") (PlutusTx.toBuiltinData  testOutputDatum)
-  _ <- writeRedeemer (datadir </>"./testOutputDatum2.json") (PlutusTx.toBuiltinData  testOutputDatum2)
-  _ <- writeRedeemer (datadir </>"./testOutputDatum3.json") (PlutusTx.toBuiltinData  testOutputDatum3)
+  -- _ <- writeRedeemer (datadir </>"./testOutputDatum.json") (PlutusTx.toBuiltinData  testOutputDatum)
+  -- _ <- writeRedeemer (datadir </>"./testOutputDatum2.json") (PlutusTx.toBuiltinData  testOutputDatum2)
+  -- _ <- writeRedeemer (datadir </>"./testOutputDatum3.json") (PlutusTx.toBuiltinData  testOutputDatum3)
 
-  _ <- writeRedeemer (datadir </>"./nftMappingTokenCurSymbol.json") (PlutusTx.toBuiltinData  (nftMappingTokenCurSymbol (NFTMappingParams nftMintCheckToken unique)))
+  -- _ <- writeRedeemer (datadir </>"./nftMappingTokenCurSymbol.json") (PlutusTx.toBuiltinData  (nftMappingTokenCurSymbol (NFTMappingParams nftMintCheckToken unique)))
 
   
-  _ <- writeRedeemer (datadir </>"./nftMintCheckTokenSymbol.json") (PlutusTx.toBuiltinData  nftMintCheckTokenSymbol)
+  -- _ <- writeRedeemer (datadir </>"./nftMintCheckTokenSymbol.json") (PlutusTx.toBuiltinData  nftMintCheckTokenSymbol)
   
-  _ <- writeRedeemer (datadir </>"./targetPKh.json") (PlutusTx.toBuiltinData  targetPKh)
+  -- _ <- writeRedeemer (datadir </>"./targetPKh.json") (PlutusTx.toBuiltinData  targetPKh)
 
-  _ <- writeRedeemer (datadir </>"./inboundTokenCurSymbol.json") (PlutusTx.toBuiltinData  inboundTokenSymbol)
+  -- _ <- writeRedeemer (datadir </>"./inboundTokenCurSymbol.json") (PlutusTx.toBuiltinData  inboundTokenSymbol)
   
-  _ <- writeRedeemer (datadir </>"./outboundTokenCurSymbol.json") (PlutusTx.toBuiltinData  outboundTokenSymbol)
+  -- _ <- writeRedeemer (datadir </>"./outboundTokenCurSymbol.json") (PlutusTx.toBuiltinData  outboundTokenSymbol)
   
 
-  _ <- writeFileTextEnvelope (v2dir </> "groupNFT.plutus") Nothing (groupNFTScript utxoRef)
-  _ <- writeFileTextEnvelope (v2dir </> "groupNFT-holder.plutus") Nothing (groupNFTHolderScript groupAdminNFTInfo)
+  -- _ <- writeFileTextEnvelope (v2dir </> "groupNFT.plutus") Nothing (groupNFTScript utxoRef)
+  -- _ <- writeFileTextEnvelope (v2dir </> "groupNFT-holder.plutus") Nothing (groupNFTHolderScript groupAdminNFTInfo)
   -- _ <- writeFileTextEnvelope (v2dir </> "treasury.plutus") Nothing (treasuryScript treasuryCheckToken)
 
   -- _ <- writeFileTextEnvelope (v2dir </> "treasury-check-token.plutus") Nothing (checkTokenScript treasuryCheckTokenParam)
