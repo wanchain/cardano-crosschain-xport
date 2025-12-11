@@ -203,14 +203,14 @@ import CrossChain.NFTRefHolder
   ,nftRefHolderAddress
   )
 
-import CrossChain.TokenHolder
-  ( tokenHolderScript
-  -- , tokenHolderScriptShortBs
-  ,tokenHolderScriptHash
-  -- ,tokenHolderScriptHashStr
-  ,tokenHolderAddress
-  ,KeyParam (..)
-  )
+-- import CrossChain.TokenHolder
+--   ( tokenHolderScript
+--   -- , tokenHolderScriptShortBs
+--   ,tokenHolderScriptHash
+--   -- ,tokenHolderScriptHashStr
+--   ,tokenHolderAddress
+--   ,KeyParam (..)
+--   )
 
 import CrossChain.XPort
   ( xPortScript
