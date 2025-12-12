@@ -1,3 +1,11 @@
+<!--
+ * @Author: liulin blue-sky-dl5@163.com
+ * @Date: 2025-12-04 17:34:51
+ * @LastEditors: liulin blue-sky-dl5@163.com
+ * @LastEditTime: 2025-12-12 09:01:51
+ * @FilePath: /cardano-crosschain-xport/README.md
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
 # cardano-crosschain-xport
 Cardano scripts for XPort crosschain.
 
@@ -61,6 +69,11 @@ The OutBound TX structure will basically contain:
 ### Bussiness Customization for functionArgs in CrossMsgData
 - To match codec between Cardano and EVM, the functionArgs shall be encoded with CBOR and its EVM peer shall encode/decode CBOR accordingly.
 - To support concurrency, the functionArgs can contain a array of multiple messages as business intent.
+
+### Tx graphic illustration
+- Based on the demo contract in the msg-demo, the following figure illustrates Inbound Tx and Outbound Tx
+![alt text](38dab601-1cff-45d8-afd6-7038bc73274e.png)
+![alt text](image.png)
 
 ### References
 For XPort crosschain in EVM, you can check EVM XPort accordingly.
