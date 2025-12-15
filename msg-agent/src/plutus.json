@@ -1,0 +1,456 @@
+{
+  "preamble": {
+    "title": "aiken-lang/msg-demo",
+    "description": "Aiken contracts for project 'aiken-lang/msg-demo'",
+    "version": "0.0.0",
+    "plutusVersion": "v3",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.1.19+e525483"
+    },
+    "license": "Apache-2.0"
+  },
+  "validators": [
+    {
+      "title": "demo_inbound.inbound.spend",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/utils~1CrossMsgData"
+        }
+      },
+      "redeemer": {
+        "title": "mint_policy",
+        "schema": {
+          "$ref": "#/definitions/cardano~1assets~1PolicyId"
+        }
+      },
+      "parameters": [
+        {
+          "title": "inbound_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "remoteContract",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "5904f20101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0039bae00248888888896600264646644b30013001300837540051980098049baa0029bae300c00398049baa300c00491191919800800802112cc00400600713233225980099b910070028acc004cdc78038014400600c807a26600a00a602a0088078dd718070009bab300f0013011001403c297adef6c60918069807000cdc3a40009111114c004c04801a6024602600d301330130049bac301200491119199119801001000912cc00400600713233225980099b910070028acc004cdc78038014400600c80b226600a00a603800880b0dd7180a8009bad3016001301800140586600e0080062900024444464b300130073014375400313322598009804980b1baa007899192cc004c02cc060dd5000c4c8c966002602660346ea8006264b3001302000189919912cc004c08c0062b30013370e0046eb4c048c07cdd51809180f9baa3006301f375401115980099b8f375c6044603e6ea801c06e2b30013370f30013322980080152f5bded8c122325980099baf30270010048998071bab3027302800100288012044302337540048060dd618110071811180f9baa00580acdd7180f001a0180028980bcc006600201b4bd6f7b630488c966002b300159800980a18109baa4c0103d87a80008a508a51408114a313375e66e9520003302430250014bd70260103d87a8000408113300c3756604a604c0020051002408060426ea8c090c094c084dd5001201480e4dd7180f1811000a0188a50407514a080ea294101d4590201bad301d0013301137566020603a6ea8c040c074dd51810180e9baa00901a301f0018b203a3300f3756603c603e603e014023164064603a60346ea8c034c068dd51800980d1baa0032301d301e301e301e301e301e301e0018b202e301b301c301c301837540026034602e6ea801e2c80a8888ca6002003004801a002222598008014400633001003980f8014cc010c078008005003203822329800800c00e004800888966002005100189919914c00401a604200b32330010010052259800800c4cc084cdd81ba9004374c00697adef6c608994c004dd7180f800cdd59810000cc0900092225980099b9000800389981299bb037520106e9801c0162b30013371e01000713259800acc004006294629410254400a26604c66ec0dd48049ba60010024088653001001804400d0011112cc00400a2003132332298008034c0b4016646600200200a44b300100189981699bb037520086ea000d2f5bded8c113298009bae302b0019bad302c00198180012444b300133720010007133031337606ea4020dd4003802c56600266e3c02000e264b30013022001880144cc0c8cdd81ba900937500020048170cdc000380144cc0c4cdd81ba900337500046600c00c002816902d0c0b800502c200c375c604c0026eb4c09c004c0a400902744cc094cdd81ba9003374c0046600c00c00281090210c088005020200c375c60340026eacc06c004c07400901b4590131919800800801912cc0040062980103d87a80008992cc004c9660026020602e6ea80062b30013375e603660306ea8008026266e21200098009bab300b30183754601660306ea800a02b375c603660306ea80050054528202c8a5040586034602e6ea8c068c05cdd51805180b9baa001899ba548000cc0640052f5c1133003003301b0024054603200280b88b200e300a300b001370e9001180500098029baa00a8a4d13656400c1",
+      "hash": "b7756bc0a441f802f27c9c075df24cd3c3cc23dd111e020c5446589b"
+    },
+    {
+      "title": "demo_inbound.inbound.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "parameters": [
+        {
+          "title": "inbound_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "remoteContract",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "5904f20101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0039bae00248888888896600264646644b30013001300837540051980098049baa0029bae300c00398049baa300c00491191919800800802112cc00400600713233225980099b910070028acc004cdc78038014400600c807a26600a00a602a0088078dd718070009bab300f0013011001403c297adef6c60918069807000cdc3a40009111114c004c04801a6024602600d301330130049bac301200491119199119801001000912cc00400600713233225980099b910070028acc004cdc78038014400600c80b226600a00a603800880b0dd7180a8009bad3016001301800140586600e0080062900024444464b300130073014375400313322598009804980b1baa007899192cc004c02cc060dd5000c4c8c966002602660346ea8006264b3001302000189919912cc004c08c0062b30013370e0046eb4c048c07cdd51809180f9baa3006301f375401115980099b8f375c6044603e6ea801c06e2b30013370f30013322980080152f5bded8c122325980099baf30270010048998071bab3027302800100288012044302337540048060dd618110071811180f9baa00580acdd7180f001a0180028980bcc006600201b4bd6f7b630488c966002b300159800980a18109baa4c0103d87a80008a508a51408114a313375e66e9520003302430250014bd70260103d87a8000408113300c3756604a604c0020051002408060426ea8c090c094c084dd5001201480e4dd7180f1811000a0188a50407514a080ea294101d4590201bad301d0013301137566020603a6ea8c040c074dd51810180e9baa00901a301f0018b203a3300f3756603c603e603e014023164064603a60346ea8c034c068dd51800980d1baa0032301d301e301e301e301e301e301e0018b202e301b301c301c301837540026034602e6ea801e2c80a8888ca6002003004801a002222598008014400633001003980f8014cc010c078008005003203822329800800c00e004800888966002005100189919914c00401a604200b32330010010052259800800c4cc084cdd81ba9004374c00697adef6c608994c004dd7180f800cdd59810000cc0900092225980099b9000800389981299bb037520106e9801c0162b30013371e01000713259800acc004006294629410254400a26604c66ec0dd48049ba60010024088653001001804400d0011112cc00400a2003132332298008034c0b4016646600200200a44b300100189981699bb037520086ea000d2f5bded8c113298009bae302b0019bad302c00198180012444b300133720010007133031337606ea4020dd4003802c56600266e3c02000e264b30013022001880144cc0c8cdd81ba900937500020048170cdc000380144cc0c4cdd81ba900337500046600c00c002816902d0c0b800502c200c375c604c0026eb4c09c004c0a400902744cc094cdd81ba9003374c0046600c00c00281090210c088005020200c375c60340026eacc06c004c07400901b4590131919800800801912cc0040062980103d87a80008992cc004c9660026020602e6ea80062b30013375e603660306ea8008026266e21200098009bab300b30183754601660306ea800a02b375c603660306ea80050054528202c8a5040586034602e6ea8c068c05cdd51805180b9baa001899ba548000cc0640052f5c1133003003301b0024054603200280b88b200e300a300b001370e9001180500098029baa00a8a4d13656400c1",
+      "hash": "b7756bc0a441f802f27c9c075df24cd3c3cc23dd111e020c5446589b"
+    },
+    {
+      "title": "demo_outbound.outbound.spend",
+      "datum": {
+        "title": "_",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/demo_outbound~1Redeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "outbound_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "remoteContract",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "5904d70101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0039bae00248888888896600264653001300a00198051805800cdc3a4005300a0024888966002600460146ea800e266446530012259800980218079baa00289919192cc004c05c00a26600c602c006264b300130080018992cc004c06400626464b3001300b0018992cc004c0700062660166036002013164064602e6ea800a2b3001300e00189919194c004dd6980e800cdd6980e801cdd6980e8012444b3001302100480745901e0c074004c070004c05cdd5001459015202a30153754002603000316405860286ea800a2b3001300b0018acc004c050dd500140162c80aa2c809101218091baa0018b20283015001301500130103754005164039301130120039808801a444b30013005301037540151323298009bae3016001980b800cdd7180b0012444b3001301a002899804180c801099199119912cc004c07c00a26464b30013370e9002180e1baa001899912cc004c04cc078dd500144c8c8c8c8c8c8ca60026052003375c605200f375a605200d375a605200930290039bad3029002488888966002606000f13300e302f00b13300e002159800981018159baa00689919912cc004c0cc006264b30013024302f3754003132323259800981b80144cc054c0d800c4c966002605660666ea8006264b30013029303437540031323259800981d800c4c96600260780031325980099baf303c3039375400c607860726ea8c8cc004004dd6181e812112cc0040062d1325980099baf303f303c375400205913022303c3754003133003003304000240e8607c00281e22b30013371e6eb8c0f0c0e4dd500281ac4c96600266e3cdd7181e981d1baa3001303a375403a91010a776d625265636569766500899b87375a6074607a0086eb4c080c0e8dd51810181d1baa3001303a375403b14a081c08c0f4c0f8c0f8c0f8c0f8c0f8c0f800629410374528206e303b0018b2072330023756603a606e6ea80700d22c81c0cc004dd5981c981d181d00f9bae30393036375405e4464646600200200844b3001001801c4c8cc896600266e4401c00a2b30013371e00e0051001803207689980280298208022076375c60740026eacc0ec004c0f400503b0a5eb7bdb1822c8198c0dcc0e0c0e0c0e0c0e0c0d0dd500bc59032180d98199baa0168b2068375a606a002606a00260606ea80062c8170c0c80062c8180dd71818000981880098161baa0068b20548b205a181480098140009813800981300098128009812000980f9baa0028b203a3020301d37540024464b30013014001899192cc004c09800a00916408c6eb8c090004c080dd5001c566002602e003132598009812800c4cc04cc09000400e2c8110c080dd5001c5901e203c301e375400516406c600860386ea8004c07800a2c80e0c8cc88cc008008004896600200314bd7044cc896600266ebcc084c078dd5001002c4cc080008cc01001000626600800800280e0c07c004c08000501d1bac301d0033001301937540244603a603c002603660360024603660386038002602c6ea80322c80b8602c00260226ea802a2c80784464b30013004001899192cc004c05800a00916404c6eb8c050004c040dd5001c566002600e0031323259800980b00140122c8098dd7180a00098081baa0038b201c4038601c6ea8008c02cdd50019b87480022c80486014002600a6ea802a29344d95900301",
+      "hash": "d69a858a992b0e5b18b9f67095604906de554f0a2ffa494ae8c176b6"
+    },
+    {
+      "title": "demo_outbound.outbound.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "parameters": [
+        {
+          "title": "outbound_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "remoteContract",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "5904d70101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0039bae00248888888896600264653001300a00198051805800cdc3a4005300a0024888966002600460146ea800e266446530012259800980218079baa00289919192cc004c05c00a26600c602c006264b300130080018992cc004c06400626464b3001300b0018992cc004c0700062660166036002013164064602e6ea800a2b3001300e00189919194c004dd6980e800cdd6980e801cdd6980e8012444b3001302100480745901e0c074004c070004c05cdd5001459015202a30153754002603000316405860286ea800a2b3001300b0018acc004c050dd500140162c80aa2c809101218091baa0018b20283015001301500130103754005164039301130120039808801a444b30013005301037540151323298009bae3016001980b800cdd7180b0012444b3001301a002899804180c801099199119912cc004c07c00a26464b30013370e9002180e1baa001899912cc004c04cc078dd500144c8c8c8c8c8c8ca60026052003375c605200f375a605200d375a605200930290039bad3029002488888966002606000f13300e302f00b13300e002159800981018159baa00689919912cc004c0cc006264b30013024302f3754003132323259800981b80144cc054c0d800c4c966002605660666ea8006264b30013029303437540031323259800981d800c4c96600260780031325980099baf303c3039375400c607860726ea8c8cc004004dd6181e812112cc0040062d1325980099baf303f303c375400205913022303c3754003133003003304000240e8607c00281e22b30013371e6eb8c0f0c0e4dd500281ac4c96600266e3cdd7181e981d1baa3001303a375403a91010a776d625265636569766500899b87375a6074607a0086eb4c080c0e8dd51810181d1baa3001303a375403b14a081c08c0f4c0f8c0f8c0f8c0f8c0f8c0f800629410374528206e303b0018b2072330023756603a606e6ea80700d22c81c0cc004dd5981c981d181d00f9bae30393036375405e4464646600200200844b3001001801c4c8cc896600266e4401c00a2b30013371e00e0051001803207689980280298208022076375c60740026eacc0ec004c0f400503b0a5eb7bdb1822c8198c0dcc0e0c0e0c0e0c0e0c0d0dd500bc59032180d98199baa0168b2068375a606a002606a00260606ea80062c8170c0c80062c8180dd71818000981880098161baa0068b20548b205a181480098140009813800981300098128009812000980f9baa0028b203a3020301d37540024464b30013014001899192cc004c09800a00916408c6eb8c090004c080dd5001c566002602e003132598009812800c4cc04cc09000400e2c8110c080dd5001c5901e203c301e375400516406c600860386ea8004c07800a2c80e0c8cc88cc008008004896600200314bd7044cc896600266ebcc084c078dd5001002c4cc080008cc01001000626600800800280e0c07c004c08000501d1bac301d0033001301937540244603a603c002603660360024603660386038002602c6ea80322c80b8602c00260226ea802a2c80784464b30013004001899192cc004c05800a00916404c6eb8c050004c040dd5001c566002600e0031323259800980b00140122c8098dd7180a00098081baa0038b201c4038601c6ea8008c02cdd50019b87480022c80486014002600a6ea802a29344d95900301",
+      "hash": "d69a858a992b0e5b18b9f67095604906de554f0a2ffa494ae8c176b6"
+    },
+    {
+      "title": "demo_token.demo_token.mint",
+      "redeemer": {
+        "title": "_",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "parameters": [
+        {
+          "title": "owner",
+          "schema": {
+            "$ref": "#/definitions/aiken~1crypto~1ScriptHash"
+          }
+        },
+        {
+          "title": "token_name",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1AssetName"
+          }
+        }
+      ],
+      "compiledCode": "5901700101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0039bae00248888888896600264646644b30013370e900018041baa00189991192cc004c040006264b30015980099b87323300100132330010013758602400a44b30010018a5eb8226644b3001325980099b8748008c048dd5000c4cdc78081bae30163013375400314a08088c054c048dd5180a98091baa301530163012375400513301400233004004001899802002000a02030130013014001404444b30010018a40011337009001198010011809800a0204800a2946266e20dd69806800a4000805a266e3cdd71806000804c5282016300f0018b201a32323300100137566020602260226022602200644b3001001801c4c8cc896600266e4402000a2b30013371e0100051001803201e899802802980a802201e375c601c0026eacc03c004c04400500f0a5eb7bdb180dd7180618049baa00130093754601800916401c6014002601460160026014002600a6ea802a29344d9590031",
+      "hash": "f5bc2ff983228fe8dbb01913d5a8f1a63ccfa43c1af6102fa74ce338"
+    },
+    {
+      "title": "demo_token.demo_token.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "parameters": [
+        {
+          "title": "owner",
+          "schema": {
+            "$ref": "#/definitions/aiken~1crypto~1ScriptHash"
+          }
+        },
+        {
+          "title": "token_name",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1AssetName"
+          }
+        }
+      ],
+      "compiledCode": "5901700101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0039bae00248888888896600264646644b30013370e900018041baa00189991192cc004c040006264b30015980099b87323300100132330010013758602400a44b30010018a5eb8226644b3001325980099b8748008c048dd5000c4cdc78081bae30163013375400314a08088c054c048dd5180a98091baa301530163012375400513301400233004004001899802002000a02030130013014001404444b30010018a40011337009001198010011809800a0204800a2946266e20dd69806800a4000805a266e3cdd71806000804c5282016300f0018b201a32323300100137566020602260226022602200644b3001001801c4c8cc896600266e4402000a2b30013371e0100051001803201e899802802980a802201e375c601c0026eacc03c004c04400500f0a5eb7bdb180dd7180618049baa00130093754601800916401c6014002601460160026014002600a6ea802a29344d9590031",
+      "hash": "f5bc2ff983228fe8dbb01913d5a8f1a63ccfa43c1af6102fa74ce338"
+    }
+  ],
+  "definitions": {
+    "ByteArray": {
+      "dataType": "bytes"
+    },
+    "Data": {
+      "title": "Data",
+      "description": "Any Plutus data."
+    },
+    "Int": {
+      "dataType": "integer"
+    },
+    "Option$cardano/address/StakeCredential": {
+      "title": "Option",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/cardano~1address~1StakeCredential"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "aiken/crypto/ScriptHash": {
+      "title": "ScriptHash",
+      "dataType": "bytes"
+    },
+    "aiken/crypto/VerificationKeyHash": {
+      "title": "VerificationKeyHash",
+      "dataType": "bytes"
+    },
+    "cardano/address/Address": {
+      "title": "Address",
+      "description": "A Cardano `Address` typically holding one or two credential references.\n\n Note that legacy bootstrap addresses (a.k.a. 'Byron addresses') are\n completely excluded from Plutus contexts. Thus, from an on-chain\n perspective only exists addresses of type 00, 01, ..., 07 as detailed\n in [CIP-0019 :: Shelley Addresses](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0019/#shelley-addresses).",
+      "anyOf": [
+        {
+          "title": "Address",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "payment_credential",
+              "$ref": "#/definitions/cardano~1address~1PaymentCredential"
+            },
+            {
+              "title": "stake_credential",
+              "$ref": "#/definitions/Option$cardano~1address~1StakeCredential"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/address/Credential": {
+      "title": "Credential",
+      "description": "A general structure for representing an on-chain `Credential`.\n\n Credentials are always one of two kinds: a direct public/private key\n pair, or a script (native or Plutus).",
+      "anyOf": [
+        {
+          "title": "VerificationKey",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+            }
+          ]
+        },
+        {
+          "title": "Script",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1ScriptHash"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/address/PaymentCredential": {
+      "title": "PaymentCredential",
+      "description": "A general structure for representing an on-chain `Credential`.\n\n Credentials are always one of two kinds: a direct public/private key\n pair, or a script (native or Plutus).",
+      "anyOf": [
+        {
+          "title": "VerificationKey",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+            }
+          ]
+        },
+        {
+          "title": "Script",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1ScriptHash"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/address/StakeCredential": {
+      "title": "StakeCredential",
+      "description": "Represent a type of object that can be represented either inline (by hash)\n or via a reference (i.e. a pointer to an on-chain location).\n\n This is mainly use for capturing pointers to a stake credential\n registration certificate in the case of so-called pointer addresses.",
+      "anyOf": [
+        {
+          "title": "Inline",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/cardano~1address~1Credential"
+            }
+          ]
+        },
+        {
+          "title": "Pointer",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "title": "slot_number",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "transaction_index",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "certificate_index",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/assets/AssetName": {
+      "title": "AssetName",
+      "dataType": "bytes"
+    },
+    "cardano/assets/PolicyId": {
+      "title": "PolicyId",
+      "dataType": "bytes"
+    },
+    "demo_outbound/Redeemer": {
+      "title": "Redeemer",
+      "anyOf": [
+        {
+          "title": "Redeemer",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "burn_policy",
+              "$ref": "#/definitions/cardano~1assets~1PolicyId"
+            },
+            {
+              "title": "burn_token_name",
+              "$ref": "#/definitions/cardano~1assets~1AssetName"
+            },
+            {
+              "title": "xport",
+              "$ref": "#/definitions/cardano~1address~1Address"
+            }
+          ]
+        }
+      ]
+    },
+    "utils/Beneficiary": {
+      "title": "Beneficiary",
+      "anyOf": [
+        {
+          "title": "Beneficiary",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "address",
+              "$ref": "#/definitions/utils~1MsgAddress"
+            },
+            {
+              "title": "amount",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "utils/CrossMsgData": {
+      "title": "CrossMsgData",
+      "anyOf": [
+        {
+          "title": "CrossMsgData",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "taskId",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "sourceChainId",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "sourceContract",
+              "$ref": "#/definitions/utils~1MsgAddress"
+            },
+            {
+              "title": "targetChainId",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "targetContract",
+              "$ref": "#/definitions/utils~1MsgAddress"
+            },
+            {
+              "title": "gasLimit",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "functionCallData",
+              "$ref": "#/definitions/utils~1FunctionCallData"
+            }
+          ]
+        }
+      ]
+    },
+    "utils/FunctionCallData": {
+      "title": "FunctionCallData",
+      "anyOf": [
+        {
+          "title": "FunctionCallData",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "functionName",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "functionArgs",
+              "$ref": "#/definitions/utils~1Beneficiary"
+            }
+          ]
+        }
+      ]
+    },
+    "utils/MsgAddress": {
+      "title": "MsgAddress",
+      "anyOf": [
+        {
+          "title": "ForeignAddress",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        },
+        {
+          "title": "LocalAddress",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/cardano~1address~1Address"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
