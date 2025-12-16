@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-05 22:43:24
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-15 10:04:50
+ * @LastEditTime: 2025-12-16 09:28:07
  * @FilePath: /msg-demo-project/msg-agent/src/config.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -42,11 +42,11 @@ const loadContractComp = (name: string) => {
 export const defaultConfig: Config = {
     INBOUND_POLICY: "ff56a8bd303d866fef9cc1c658a65de6ebf6362f1ffbd8c7247d7253",
     OUTBOUND_POLICY: "68dcf7ced6472998aabf2e4a4b0d1719af75a62c62cd4a91bd499919",
-    OUTBOUND_TOKEN_NAME: Buffer.from("OutboundTokenCoin", 'utf-8').toString('hex'),
+    OUTBOUND_TOKEN_NAME: Buffer.from("OutboundTokenCoin", 'ascii').toString('hex'),
     XPORT: '',
     NETWORK: 0, //testnet
-    EvmContractADDRESS: Buffer.from('0x2d37e62ee7d72d5b072d8b027af244960ffa0920','utf-8').toString('hex'),
-    demoTokenName:  Buffer.from('DemoToken','utf-8').toString('hex'),
+    EvmContractADDRESS: Buffer.from('0x2d37e62ee7d72d5b072d8b027af244960ffa0920','ascii').toString('hex'),
+    demoTokenName:  Buffer.from('DemoToken','ascii').toString('hex'),
     demoInbound: loadContractComp('demo_inbound.inbound.spend'),
     demoOutbound: loadContractComp('demo_outbound.outbound.spend'),
     demoToken: loadContractComp('demo_token.demo_token.mint'),

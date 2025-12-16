@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-15 18:07:37
+ * @LastEditTime: 2025-12-16 10:55:00
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -187,7 +187,7 @@ async function fetchTask(provider: BlockfrostProvider) {
     // await createInboundTask(receiverOnAda, CROSS_TRANSFER_AMOUNT);
     const utxos = await provider.fetchAddressUTxOs(contractsInfo.inboundDemoAddress);
     utxos.map(utxo => {
-        if (utxo.input.txHash == '17b42bc48d58188a3f8060e2ae19e2e3b3bb7dba28c7764eb4c0b96aeb59010c') return;
+        // if (utxo.input.txHash != '8c181ac3a93e4beadb3fac33bc79e60c8986a43aafa29eead9f25aef5851b75a') return;
         try {
             const task = new Task(utxo);
             if (taskPool.isExist(task.id)) {
@@ -225,7 +225,7 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
         .spendingPlutusScript(contractsInfo.inboundDemoScript.version)
         .txIn(task.utxo.input.txHash, task.utxo.input.outputIndex, task.utxo.output.amount, task.utxo.output.address, 0)
         .spendingReferenceTxInInlineDatumPresent()
-        .spendingReferenceTxInRedeemerValue(mConStr0([contractsInfo.demoTokenPolicy])).txInScript(contractsInfo.inboundDemoScript.code)
+        .spendingReferenceTxInRedeemerValue(contractsInfo.demoTokenPolicy).txInScript(contractsInfo.inboundDemoScript.code)
 
         // .mintPlutusScript(contractsInfo.inboundTokenScript.version)
         // .mint('-' + inboundTokenAssetOfUtxo.quantity, inboundTokenPolicy, inboundTokenName)
@@ -253,7 +253,7 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
     // const aa = new TxParser(txBuilder.serializer, provider);
     // const bb = aa.toTester().errors();
     // console.log('======>',bb);
-    // fs.writeFileSync('./inbound.tx', signedTx);
+    fs.writeFileSync('./inbound.tx', signedTx);
     const txHash = await wallet.submitTx(signedTx);
     return txHash;
     // return "";
@@ -266,7 +266,7 @@ async function doTask(n: number = 1) {
     const confirmTx = (txHash: string): Promise<void> => {
         provider.onTxConfirmed(txHash, () => {
             Promise.resolve();
-        });
+        },1);
         return;
     }
 
@@ -524,8 +524,9 @@ async function loadWallet() {
             stake: '5820' + process.env.ACCOUNT_SEED1,
         },
     });
-    console.log('wallet address:', wallet.addresses.baseAddressBech32);
+   
     await wallet.init();
+    console.log('wallet address:', wallet.addresses.baseAddressBech32);
 
     let colleteralUtxo = await wallet.getCollateral();
     if (colleteralUtxo.length === 0) {
