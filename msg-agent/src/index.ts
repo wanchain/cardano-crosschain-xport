@@ -2,12 +2,12 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-16 21:02:11
+ * @LastEditTime: 2025-12-16 23:30:28
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { BlockfrostProvider, MeshTxBuilder, MeshWallet, UtxoSelection, deserializeDatum, serializeAddressObj, serializePlutusScript, policyId, AssetFingerprint, Asset, Output, resolveScriptHash, mConStr0, deserializeAddress, Transaction, MintingBlueprint, Mint, Wallet, TxParser, serializeData, OgmiosProvider } from '@meshsdk/core';
-import { conStr0, mConStr1, mMaybeStakingHash, mPlutusBSArrayToString, mPubKeyAddress, mScriptAddress, stringToHex, UTxO } from "@meshsdk/common";
+import { conStr0, Data, mConStr1, mMaybeStakingHash, mPlutusBSArrayToString, mPubKeyAddress, mScriptAddress, stringToHex, UTxO } from "@meshsdk/common";
 import contractsInfo from "./scripts";
 import dotenv from 'dotenv';
 import path from 'node:path';
@@ -30,7 +30,7 @@ dotenv.config({ path: path.join(__dirname, '../', '.env') });
 
 const receiverOnAda = 'addr_test1qpm0q3dmc0cq4ea75dum0dgpz4x5jsdf6jk0we04yktpuxnk7pzmhslsptnmagmek76sz92df9q6n49v7ajl2fvkrcdq9semsd';
 const receiverOnEvm = '0x1d1e18e1a484d0a10623661546ba97DEfAB7a7AE'.toLowerCase();
-const CROSS_TRANSFER_AMOUNT = 1000;
+const CROSS_TRANSFER_AMOUNT = 500;
 
 console.log(`inboundDemoScript address: ${contractsInfo.inboundDemoAddress}`);
 console.log(`inboundTokenScript policy: ${contractsInfo.inboundTokenPolicy}`);
@@ -331,7 +331,7 @@ function betch32AddressToMeshData(addr: string) {
         if (a.stakeCredentialHash) return mPubKeyAddress(a.pubKeyHash, a.stakeCredentialHash, false);
         else return mPubKeyAddress(a.pubKeyHash, a.stakeScriptCredentialHash, true);
     } else {
-        if (a.stakeCredentialHash) return mPubKeyAddress(a.scriptHash, a.stakeCredentialHash, false);
+        if (a.stakeCredentialHash) return mScriptAddress(a.scriptHash, a.stakeCredentialHash, false);
         else return mScriptAddress(a.scriptHash, a.stakeScriptCredentialHash, true)
     }
 }
@@ -350,7 +350,7 @@ function genBeneficiaryData(receiver: string, amount: string | bigint | number) 
     return mConStr0([to, amount]);
 }
 function genMsgCrossData(to: string, amount: string | bigint | number, direction: TaskType) {
-    const script = contractsInfo.inboundDemoScript;
+    const script = direction == TaskType.INBOUND?contractsInfo.inboundDemoScript:contractsInfo.outboundDemoScript;
     const scriptHash = resolveScriptHash(script.code, script.version);
     const taskId = direction == TaskType.INBOUND ? Buffer.alloc(32, Math.random().toString(16)).toString('hex') : '';
     const fromChainId = direction == TaskType.INBOUND ? defaultConfig.EvmChainId : defaultConfig.AdaChainId;
@@ -358,9 +358,9 @@ function genMsgCrossData(to: string, amount: string | bigint | number, direction
     const toChainId = direction == TaskType.INBOUND ? defaultConfig.AdaChainId : defaultConfig.EvmChainId;
 
     const toAddress = direction == TaskType.INBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([defaultConfig.EvmContractADDRESS]);
-    const gasLimit = 2000000;
+    const gasLimit = 2000000;//should to be a config feild
     // const receiver = direction == TaskType.INBOUND ? mConStr1([betch32AddressToMeshData(to)]): mConStr0([Buffer.from(to,'ascii').toString('hex')]);
-    const tmpCallData = mConStr0(['wmbReceive', genBeneficiaryData(to, amount)]);
+    const tmpCallData = mConStr0(['wmbReceive', serializeData(genBeneficiaryData(to, amount))]);
     return mConStr0([taskId, fromChainId, fromAddress, toChainId, toAddress, gasLimit, tmpCallData]);
     // return mConStr0([receiver, amount]);
 }
@@ -470,12 +470,12 @@ async function createOutboundTask(wallet: MeshWallet, to: string, amount: string
 async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
 
     let outboundTaskUtxo = task.utxo;
-    const beneficiary = getBeneficiaryFromCbor(outboundTaskUtxo.output.plutusData);
+    const beneficiary = task.functionCallData.functionArgs;//getBeneficiaryFromCbor(outboundTaskUtxo.output.plutusData);
 
     const asset = outboundTaskUtxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.demoTokenPolicy) == 0));
     if (!asset || BigInt(asset.quantity) < BigInt(beneficiary.amount)) { throw 'not enough token' };
 
-    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: provider });
+    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: ogmios });
     let assetsOfOutboundToken = [{
         unit: contractsInfo.outboundTokenPolicy + defaultConfig.OUTBOUND_TOKEN_NAME,
         quantity: '1'
@@ -499,6 +499,7 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
     //   burn_policy: PolicyId,
     //   burn_token_name: AssetName,
     //   xport: Address,
+
     const outboundRedeemer = mConStr0([contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName, betch32AddressToMeshData(contractsInfo.xportAddress)]);
     
     const changeAddress = await wallet.getChangeAddress();
@@ -510,7 +511,11 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
         .mintPlutusScript(contractsInfo.demoTokenScript.version)
         .mint('-' + BigInt(beneficiary.amount).toString(10), contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName)
         .mintingScript(contractsInfo.demoTokenScript.code)
-        .mintRedeemerValue("")
+        .mintRedeemerValue(mConStr0([]))
+        .mintPlutusScript(contractsInfo.outboundTokenScript.version)
+        .mint('1',contractsInfo.outboundTokenPolicy, defaultConfig.OUTBOUND_TOKEN_NAME)
+        .mintingScript(contractsInfo.outboundTokenScript.code)
+        .mintRedeemerValue(mConStr0([]))
         .txOut(contractsInfo.xportAddress, assetsOfOutboundToken)
         .txOutInlineDatumValue(outboundDatum)
         .txInCollateral(
