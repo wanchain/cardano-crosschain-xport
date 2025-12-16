@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-16 14:26:25
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-16 19:52:46
+ * @LastEditTime: 2025-12-16 21:23:52
  * @FilePath: /cardano-crosschain-xport/msg-agent/README.md
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -16,9 +16,9 @@ And it also sends the message to the other chain for token cross-chain transfer 
 ## Functions
 
 - Receive messages from other chains:
-  - xport will mint a inbountToken utxo to inbountDemo contract when a cross-chain transfer message is sent on other chain.The msg-agent monitors the utxos at the inbountDemo contract address to detect the cross-chain transfer message, and then to mint demo token to user account specified by address field, and the minting amount specified by amount field.
+  - xport will mint a inbountToken utxo to inboundDemo contract when a cross-chain transfer message is sent on other chain.The msg-agent monitors the utxos at the inboundDemo contract address to detect the cross-chain transfer message, and then to mint demo token to user account specified by address field, and the minting amount specified by amount field.
 - Forward messages to other chains:
-  - The msg-agent monitors the utxos with the demo token at the outbountDemo contract address to detect the cross-chain transfer message to other chain, and the msg-agent will burn the demo token of the utxo , which will forward the message to be the other chain via xport, and the other chain will mint a demo token the receiver account on target chain.
+  - The msg-agent monitors the utxos with the demo token at the outboundDemo contract address to detect the cross-chain transfer message to other chain, and the msg-agent will burn the demo token of the utxo , which will forward the message to be the other chain via xport, and the other chain will mint a demo token the receiver account on target chain.
 - User initiates a cross-chain transfer message:
   - User sends a cross-chain transfer message to the msg-agent by send a utxo with demo token to the outbount contract address.
 
