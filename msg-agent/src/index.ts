@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-16 10:55:00
+ * @LastEditTime: 2025-12-16 19:54:21
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -28,7 +28,7 @@ dotenv.config({ path: path.join(__dirname, '../', '.env') });
 // const outboundDemoScriptInof = getOutboundDemoScript();
 
 
-const receiverOnAda = 'addr_test1qpstydtgjfyavqecas5w730m86tltgl3ask2xsl3hfl2vw9ng88pgc8c4mh3tx0mpm2es8e54w86rvat6de0nmgec5ast965pg';
+const receiverOnAda = 'addr_test1qpm0q3dmc0cq4ea75dum0dgpz4x5jsdf6jk0we04yktpuxnk7pzmhslsptnmagmek76sz92df9q6n49v7ajl2fvkrcdq9semsd';
 const receiverOnEvm = '0x1d1e18e1a484d0a10623661546ba97DEfAB7a7AE'.toLowerCase();
 const CROSS_TRANSFER_AMOUNT = 1000000;
 
@@ -44,8 +44,8 @@ console.log(`demoTokenScrip policy: ${contractsInfo.demoTokenPolicy}`);
 
 
 // console.log(`inboundDemoScript: ${inboundDemoScriptInfo.script.code}`);
-
-const provider = new BlockfrostProvider(process.env.BLOCKFROST_API_KEY);
+// if(!process.env.BLOCKFROST_API_KEY) throw 'BLOCKFROST_API_KEY is not set'
+const provider = new BlockfrostProvider(process.env.BLOCKFROST_API_KEY ? process.env.BLOCKFROST_API_KEY : '');
 const ogmiosUrl = 'https://ogmios1uxnqpx0u6erjzpcfdtk.cardano-preprod-v6.ogmios-m1.dmtr.host';
 // const ogmiosUrl = '52.13.9.234:1337';
 const ogmios = new OgmiosProvider(ogmiosUrl)
@@ -92,9 +92,10 @@ class Task implements TaskInfo {
     readonly taskType: TaskType;
     readonly utxo: UTxO;
     status: TaskStatus;
-    finishedTx: string | null;
+    finishedTx?: string;
 
     constructor(utxo: UTxO) {
+        if (!utxo.output.plutusData) throw 'utxo is not a task';
         const msgCrossData = getMsgCrossDataFromCbor(utxo.output.plutusData);
         this.id = msgCrossData.msgId;
         this.fromChainId = msgCrossData.fromChainId;
@@ -106,12 +107,16 @@ class Task implements TaskInfo {
 
         if (utxo.output.amount.find((item) => (item.unit.indexOf(defaultConfig.INBOUND_POLICY) == 0) || (item.unit == 'lovelace') && defaultConfig.INBOUND_POLICY == "")) {
             this.taskType = TaskType.INBOUND;
-        }
-        if (utxo.output.amount.find((item) => (item.unit.indexOf(defaultConfig.OUTBOUND_POLICY) == 0) || (item.unit == 'lovelace') && defaultConfig.OUTBOUND_POLICY == "")) {
+        } else if (utxo.output.amount.find((item) => (item.unit.indexOf(defaultConfig.OUTBOUND_POLICY) == 0) || (item.unit == 'lovelace') && defaultConfig.OUTBOUND_POLICY == "")) {
             this.taskType = TaskType.OUTBOUND;
             this.id = utxo.input.txHash;
+            const beneficiary = getBeneficiaryFromCbor(utxo.output.plutusData);
+            const asset = utxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.demoTokenPolicy) == 0));
+            if (!asset || BigInt(asset.quantity) < BigInt(beneficiary.amount)) { throw 'utxo is not a task,not enough token' };
+        } else {
+            throw 'utxo is not a task';
         }
-        if (!this.taskType) throw 'utxo is not a task';
+        // if (!this.taskType) throw 'utxo is not a task';
         // console.log('222222222',datum.fields[4])
         // this.functionCallData = {
         //     functionName: tmpCallData.fields[0].bytes,
@@ -148,7 +153,7 @@ class TaskPool {
 
     popTask(n: number): Task[] {
         if (this.taskQueue.length == 0) return [];
-        const tasks = [];
+        const tasks: Task[] = [];
         this.taskQueue.forEach(task => {
             if (task.status == TaskStatus.IDLE) {
                 task.status = TaskStatus.PENDING;
@@ -167,7 +172,7 @@ class TaskPool {
             }
         }
 
-        console.log(`remove finished task(${taskIds.length}):${taskIds}`);
+        if (taskIds.length) console.log(`remove finished task(${taskIds.length}):${taskIds}`);
         for (let index = 0; index < taskIds.length; index++) {
             const taskId = taskIds[index];
             this.taskMap.delete(taskId);
@@ -180,31 +185,38 @@ class TaskPool {
     }
 }
 
-let taskPool: TaskPool = new TaskPool();
-let wallet: MeshWallet;
+let inboundTaskPool: TaskPool = new TaskPool();
+let outboundTaskPool: TaskPool = new TaskPool();
+let walletInbound: MeshWallet;
+let walletOutbound: MeshWallet;
+let walletUser: MeshWallet;
 // class WalletPool
-async function fetchTask(provider: BlockfrostProvider) {
+async function fetchTask(provider: BlockfrostProvider, taskType: TaskType) {
     // await createInboundTask(receiverOnAda, CROSS_TRANSFER_AMOUNT);
-    const utxos = await provider.fetchAddressUTxOs(contractsInfo.inboundDemoAddress);
+    const taskContractAddress = taskType == TaskType.INBOUND ? contractsInfo.inboundDemoAddress : contractsInfo.outboundDemoAddress;
+    let taskPool = taskType == TaskType.INBOUND ? inboundTaskPool : outboundTaskPool;
+    const utxos = await provider.fetchAddressUTxOs(taskContractAddress);
     utxos.map(utxo => {
         // if (utxo.input.txHash != '8c181ac3a93e4beadb3fac33bc79e60c8986a43aafa29eead9f25aef5851b75a') return;
         try {
             const task = new Task(utxo);
             if (taskPool.isExist(task.id)) {
-                console.log(`task ${task.id} is exist,ignoral`);
+                console.log(`${taskType} task ${task.id} is exist,ignoral`);
                 return;
             }
             taskPool.push(task);
-            console.log('add task', task.id, 'current task pool size:', taskPool.size(), task.functionCallData);
+            console.log(`add ${taskType} task : ${task.id}, current task pool size: ${taskPool.size()} receiver: ${task.functionCallData.functionArgs.receiver}, amount: ${task.functionCallData.functionArgs.amount}`);
         } catch (error) {
-            console.log(`${utxo.input.txHash}#${utxo.input.outputIndex} is not a task`);
+            console.log(`${utxo.input.txHash}#${utxo.input.outputIndex} is not a valid ${taskType} task`);
             console.error(error);
         }
     });
 }
 
 async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<string> {
+
     const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: ogmios });
+
     let assets = [{
         unit: contractsInfo.demoTokenPolicy + defaultConfig.demoTokenName,
         quantity: BigInt(task.functionCallData.functionArgs.amount).toString(10)
@@ -219,8 +231,9 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
     const collateral = (await wallet.getCollateral())[0];
     console.log(JSON.stringify(collateral));
     const inboundTokenAssetOfUtxo = task.utxo.output.amount.find(asset => asset.unit.indexOf(contractsInfo.inboundTokenPolicy) == 0);
-    const inboundTokenPolicy = inboundTokenAssetOfUtxo.unit.slice(0, 56);
-    const inboundTokenName = inboundTokenAssetOfUtxo.unit.slice(56);
+    const inboundTokenPolicy = inboundTokenAssetOfUtxo?.unit.slice(0, 56);
+    const inboundTokenName = inboundTokenAssetOfUtxo?.unit.slice(56);
+    const changeAddress = await wallet.getChangeAddress();
     await txBuilder
         .spendingPlutusScript(contractsInfo.inboundDemoScript.version)
         .txIn(task.utxo.input.txHash, task.utxo.input.outputIndex, task.utxo.output.amount, task.utxo.output.address, 0)
@@ -243,40 +256,56 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
             collateral.output.amount,
             collateral.output.address
         )
-        .changeAddress(wallet.addresses.baseAddressBech32)
+        .changeAddress(changeAddress)
         .selectUtxosFrom(utxos)
         .complete();
     const unsignedTx = txBuilder.txHex;
     const signedTx = await wallet.signTx(unsignedTx);
     // const exUnit = await provider.evaluateTx(signedTx);
-    console.log('signed tx:', signedTx);
+    // console.log('signed tx:', signedTx);
     // const aa = new TxParser(txBuilder.serializer, provider);
     // const bb = aa.toTester().errors();
     // console.log('======>',bb);
-    fs.writeFileSync('./inbound.tx', signedTx);
+    // fs.writeFileSync('./inbound.tx', signedTx);
     const txHash = await wallet.submitTx(signedTx);
     return txHash;
-    // return "";
 }
 
 async function doTask(n: number = 1) {
-    const tasks = taskPool.popTask(n);
+    const tasks = inboundTaskPool.popTask(n);
     if (tasks.length <= 0) return;
 
     const confirmTx = (txHash: string): Promise<void> => {
-        provider.onTxConfirmed(txHash, () => {
-            Promise.resolve();
-        },1);
-        return;
+        return new Promise((resolve) => {
+            provider.onTxConfirmed(txHash, () => {
+                resolve();
+            }, 1);
+        });
     }
 
-    tasks.forEach(async task => {
-        console.log(`Begin to excute task:[${task.id}] receiver:${task.functionCallData.functionArgs.receiver} amount:${task.functionCallData.functionArgs.amount}]`);
-        const txHash = await sendTxDoInboundTask(wallet, task);
 
-        await confirmTx(txHash);
-        task.finishedTx = txHash;
-        task.status = TaskStatus.SUCCESS;
+    tasks.forEach(async task => {
+        console.log(`Begin to excute ${task.taskType} task:[${task.id}] receiver:${task.functionCallData.functionArgs.receiver} amount:${task.functionCallData.functionArgs.amount}]`);
+        let txHash;
+        switch (task.taskType) {
+            case TaskType.INBOUND: {
+                txHash = await sendTxDoInboundTask(walletInbound, task);
+                break;
+            }
+            case TaskType.OUTBOUND: {
+                txHash = await sendTxDoOutboundTask(walletOutbound, task);
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        if (txHash) {
+            await confirmTx(txHash);
+            task.finishedTx = txHash;
+            task.status = TaskStatus.SUCCESS;
+        }
     })
 
 }
@@ -324,8 +353,8 @@ function genMsgCrossData(to: string, amount: string | bigint | number, direction
 
 function getBeneficiaryFromCbor(hex: string) {
     const datum = deserializeDatum(hex);
-    console.log('hex:', hex);
-    console.log('datum--: ', datum.fields[0])
+    // console.log('hex:', hex);
+    // console.log('datum--: ', datum.fields[0])
     const receiver = datum.fields[0].constructor == 0n ? datum.fields[0].bytes : serializeAddressObj(datum.fields[0].fields[0], defaultConfig.NETWORK);
     const amount = datum.fields[1].int;
 
@@ -353,7 +382,7 @@ function getMsgCrossDataFromCbor(hex: string) {
 
 
 async function createInboundTask(to: string, amount: string | bigint | number) {
-    const utxos = await wallet.getUtxos();
+    const utxos = await walletInbound.getUtxos();
     const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, });
 
     let assets = [{ unit: 'lovelace', quantity: '1200000' }];
@@ -374,25 +403,25 @@ async function createInboundTask(to: string, amount: string | bigint | number) {
     const minAda = txBuilder.calculateMinLovelaceForOutput(outputOfTarget);
     assets.push({ unit: 'lovelace', quantity: minAda.toString(10) });
 
-    const tx = new Transaction({ initiator: wallet })
+    const tx = new Transaction({ initiator: walletInbound })
         .sendLovelace({
             address: contractsInfo.inboundDemoAddress,
             datum: { value: datum, inline: true },
         }, minAda.toString(10));
     const unsignedTx = await tx.build();
     // console.log(unsignedTx);
-    const signedTx = await wallet.signTx(unsignedTx);
+    const signedTx = await walletInbound.signTx(unsignedTx);
     // console.log(signedTx);
-    const txHash = await wallet.submitTx(signedTx);
+    const txHash = await walletInbound.submitTx(signedTx);
     console.log(`create Inbound Task tx: ${txHash}`);
 }
 
 
-async function createOutboundTask() {
-    const utxos = await wallet.getUtxos();
+async function createOutboundTask(wallet: MeshWallet, to: string, amount: string | bigint | number) {
+    // const utxos = await walletUser.getUtxos();
     const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, });
 
-    let assets = [{ unit: 'lovelace', quantity: '1000000' }];
+    let assets = [{ unit: 'lovelace', quantity: '1300000' }, { unit: contractsInfo.demoTokenPolicy + defaultConfig.demoTokenName, quantity: BigInt(amount).toString(10) }];
     // const { scriptAddress } = getOutboundDemoScript();contractsInfo.outboundDemoAddress
     const datum = mConStr0([]);
     let outputOfTarget: Output = {
@@ -411,33 +440,27 @@ async function createOutboundTask() {
     const minAda = txBuilder.calculateMinLovelaceForOutput(outputOfTarget);
     assets.push({ unit: 'lovelace', quantity: minAda.toString(10) });
 
-    const tx = new Transaction({ initiator: wallet })
+    const tx = new Transaction({ initiator: walletInbound })
         .sendLovelace({
             address: contractsInfo.outboundDemoAddress,
             datum: { value: datum, inline: true },
         }, minAda.toString(10));
     const unsignedTx = await tx.build();
     // console.log(unsignedTx);
-    const signedTx = await wallet.signTx(unsignedTx);
+    const signedTx = await walletInbound.signTx(unsignedTx);
     // console.log(signedTx);
-    const txHash = await wallet.submitTx(signedTx);
+    const txHash = await walletInbound.submitTx(signedTx);
     console.log(`create outbound Task tx: ${txHash}`);
+    return txHash;
 }
 
-async function outboundTransfer(wallet: MeshWallet, to: string, amount: number | string | bigint) {
-    let outboundTaskUtxos = await provider.fetchAddressUTxOs(contractsInfo.outboundDemoAddress);
-    if (outboundTaskUtxos.length === 0) {
-        await createOutboundTask();
-        const waitFetchUtxo = async () => {
-            while (outboundTaskUtxos.length === 0) {
-                let outboundTaskUtxos = await provider.fetchAddressUTxOs(contractsInfo.outboundDemoAddress);
-                if (outboundTaskUtxos.length === 0) {
-                    sleep(5000);
-                }
-            }
-        }
-        await timeout(10000, waitFetchUtxo());
-    }
+async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
+
+    let outboundTaskUtxo = task.utxo;
+    const beneficiary = getBeneficiaryFromCbor(outboundTaskUtxo.output.plutusData);
+
+    const asset = outboundTaskUtxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.demoTokenPolicy) == 0));
+    if (!asset || BigInt(asset.quantity) < BigInt(beneficiary.amount)) { throw 'not enough token' };
 
     const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: provider });
     let assetsOfOutboundToken = [{
@@ -456,14 +479,15 @@ async function outboundTransfer(wallet: MeshWallet, to: string, amount: number |
     //   burn_token_name: AssetName,
     //   xport: Address,
     const outboundRedeemer = mConStr0([contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName, betch32AddressToMeshData(contractsInfo.xportAddress)]);
-    const outboundDatum = genMsgCrossData(to, amount, TaskType.OUTBOUND);
+    const outboundDatum = genMsgCrossData(beneficiary.receiver, beneficiary.amount, TaskType.OUTBOUND);
+    const changeAddress = await wallet.getChangeAddress();
     await txBuilder
         .spendingPlutusScript(contractsInfo.outboundDemoScript.version)
-        .txIn(outboundTaskUtxos[0].input.txHash, outboundTaskUtxos[0].input.outputIndex, outboundTaskUtxos[0].output.amount, outboundTaskUtxos[0].output.address, 0)
+        .txIn(outboundTaskUtxo.input.txHash, outboundTaskUtxo.input.outputIndex, outboundTaskUtxo.output.amount, outboundTaskUtxo.output.address, 0)
         .spendingReferenceTxInInlineDatumPresent()
         .spendingReferenceTxInRedeemerValue(outboundRedeemer).txInScript(contractsInfo.outboundDemoScript.code)
         .mintPlutusScript(contractsInfo.demoTokenScript.version)
-        .mint('-' + BigInt(amount).toString(10), contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName)
+        .mint('-' + BigInt(beneficiary.amount).toString(10), contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName)
         .mintingScript(contractsInfo.demoTokenScript.code)
         .mintRedeemerValue("")
         .txOut(contractsInfo.xportAddress, assetsOfOutboundToken)
@@ -474,7 +498,7 @@ async function outboundTransfer(wallet: MeshWallet, to: string, amount: number |
             collateral.output.amount,
             collateral.output.address
         )
-        .changeAddress(wallet.addresses.baseAddressBech32).selectUtxosFrom(utxos).complete();
+        .changeAddress(changeAddress).selectUtxosFrom(utxos).complete();
     const unsignedTx = txBuilder.txHex;
     const signedTx = await wallet.signTx(unsignedTx);
     // const exUnit = await provider.evaluateTx(signedTx);
@@ -482,6 +506,7 @@ async function outboundTransfer(wallet: MeshWallet, to: string, amount: number |
     const txHash = await wallet.submitTx(signedTx);
     return txHash;
 }
+
 
 
 async function timeout(ms: number, promise: Promise<any>) {
@@ -504,33 +529,19 @@ async function sleep(milsec: number): Promise<void> {
 
 async function monitor() {
     while (1) {
-        await fetchTask(provider);
+        await fetchTask(provider, TaskType.INBOUND);
+        await fetchTask(provider, TaskType.OUTBOUND);
         await doTask(3);
-        taskPool.removeDone();
-        await sleep(1000);
+        inboundTaskPool.removeDone();
+        await sleep(5000);
     }
 }
 
 
-async function loadWallet() {
-
-    wallet = new MeshWallet({
-        networkId: defaultConfig.NETWORK ? 1 : 0, // 0: testnet, 1: mainnet
-        fetcher: provider,
-        submitter: provider,
-        key: {
-            type: 'cli',
-            payment: '5820' + process.env.ACCOUNT_SEED1,
-            stake: '5820' + process.env.ACCOUNT_SEED1,
-        },
-    });
-   
-    await wallet.init();
-    console.log('wallet address:', wallet.addresses.baseAddressBech32);
-
+async function walletReady(wallet: MeshWallet) {
     let colleteralUtxo = await wallet.getCollateral();
     if (colleteralUtxo.length === 0) {
-        console.log('no collateral utxo, create collateral utxo auto ...');
+        console.log(`wallet ${wallet.getAddresses().baseAddressBech32} has no collateral utxo, create collateral utxo auto ...`);
         await wallet.createCollateral();
         const waitFetchCollateral = async () => {
             while (colleteralUtxo.length === 0) {
@@ -552,41 +563,73 @@ async function loadWallet() {
     colleteralUtxo.forEach(utxo => {
         console.log('\t', utxo.input.txHash, utxo.input.outputIndex, JSON.stringify(utxo.output.amount), utxo.output.address);
     })
+}
+async function loadWallet(seed: string) {
 
+    let wallet = new MeshWallet({
+        networkId: defaultConfig.NETWORK ? 1 : 0, // 0: testnet, 1: mainnet
+        fetcher: provider,
+        submitter: provider,
+        key: {
+            type: 'cli',
+            payment: seed,//'5820' + process.env.ACCOUNT_SEED1,
+            stake: seed,//'5820' + process.env.ACCOUNT_SEED1,
+        },
+    });
 
+    await wallet.init();
+    console.log('wallet address:', wallet.addresses.baseAddressBech32);
+    return wallet;
 }
 
 
 async function main() {
     // const aa = await ogmios.fetchProtocolParameters();
-    await loadWallet();
+    walletInbound = await loadWallet('5820' + process.env.ACCOUNT_SEED1);
+    walletOutbound = await loadWallet('5820' + process.env.ACCOUNT_SEED2);
+    // walletUser = await loadWallet('5820' + process.env.ACCOUNT_SEED3);
+
+    await walletReady(walletInbound);
+    await walletReady(walletOutbound);
+    // await walletReady(walletUser);
     await monitor();
 }
 
-main().catch((err) => {
-    console.log('error:', err);
-});
+// main().catch((err) => {
+//     console.log('error:', err);
+// });
+
+export const userCossChainTransfer = async () => {
+    walletUser = await loadWallet('5820' + process.env.ACCOUNT_SEED3);
+    return await createOutboundTask(walletUser, receiverOnEvm, CROSS_TRANSFER_AMOUNT);
+}
 
 
-// import { Command } from 'commander';
-// const program = new Command();
+import { Command } from 'commander';
+const program = new Command();
 
-// program.name('msg-agent').description('demo agent for msg cross chian').version('1.0.0');
+program.name('msg-agent').description('demo agent for msg cross chian').version('1.0.0');
 
-// program
-//   .command('monitor')
-//   .description('Start monitoring inbound tasks and processing them')
-//   .action(async () => {
-//     await loadWallet();
-//     await monitor();
-//   });
+program
+    .command('monitor')
+    .description('Start monitoring inbound outbound tasks and processing them')
+    .action(async () => {
+        walletInbound = await loadWallet('5820' + process.env.ACCOUNT_SEED1);
+        walletOutbound = await loadWallet('5820' + process.env.ACCOUNT_SEED2);
+        walletUser = await loadWallet('5820' + process.env.ACCOUNT_SEED3);
 
-// program
-//   .command('outbound')
-//   .description('cross transfer demoToken')
-//   .action(async () => {
-//     await loadWallet();
-//     await outboundTransfer(wallet,receiverOnEvm,CROSS_TRANSFER_AMOUNT);
-//   });
+        await walletReady(walletInbound);
+        await walletReady(walletOutbound);
+        // await walletReady(walletUser);
+        await monitor();
+    });
 
-// program.parse(process.argv);
+program
+    .command('client')
+    .description('cross-transfer demoToken')
+    .action(async () => {
+        walletUser = await loadWallet('5820' + process.env.ACCOUNT_SEED3);
+        await createOutboundTask(walletUser, receiverOnEvm, CROSS_TRANSFER_AMOUNT);
+    });
+
+program.parse(process.argv);

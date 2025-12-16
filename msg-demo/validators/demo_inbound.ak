@@ -1,20 +1,23 @@
+use aiken/cbor.{deserialise}
 use aiken/collection/dict
 use aiken/collection/list
-use aiken/primitive/string
-use cardano/address.{Address, Script}
+// use aiken/primitive/string
+use cardano/address.{Address, Script, VerificationKey}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{Output, OutputReference, Transaction}
-use utils.{Beneficiary,ForeignAddress,LocalAddress,FunctionCallData,CrossMsgData,value_at_address,total_input_value}
+use utils.{
+  Beneficiary, CrossMsgData, ForeignAddress, FunctionCallData, LocalAddress,
+  total_input_value, value_at_address,
+}
 
-
-validator inbound(inbound_policy: PolicyId,remoteContract: ByteArray) {
+validator inbound(inbound_policy: PolicyId, remoteContract: ByteArray) {
   spend(
     datum: Option<CrossMsgData>,
     mint_policy: PolicyId,
     own_ref: OutputReference,
     self: Transaction,
   ) {
-    trace @"redeemer": string.from_bytearray(mint_policy)
+    // trace @"redeemer": string.from_bytearray(mint_policy)
     let Transaction { inputs, mint, outputs, .. } = self
 
     // Select the first input and concatenate its output reference and index to
@@ -23,35 +26,51 @@ validator inbound(inbound_policy: PolicyId,remoteContract: ByteArray) {
       list.find(
         inputs,
         fn(input) {
-          expect Script(script_hash) = input.output.address.payment_credential
-          (input.output_reference == own_ref) 
-          && (assets.quantity_of( input.output.value, inbound_policy, script_hash) > 0)
+          // expect Script(script_hash) = input.output.address.payment_credential
+          when input.output.address.payment_credential is {
+            Script(script_hash) ->
+              input.output_reference == own_ref && assets.quantity_of(
+                input.output.value,
+                inbound_policy,
+                script_hash,
+              ) > 0
+            VerificationKey(_) -> False
+          }
         },
       )
-    let total_input_value = total_input_value(inputs,None)
+    let total_input_value = total_input_value(inputs, None)
 
     expect Some(cross_msg_data) = datum
     expect ForeignAddress(sourceContract) = cross_msg_data.sourceContract
-    expect LocalAddress(receiver) = cross_msg_data.functionCallData.functionArgs.address
-    
-    let value_at_target = value_at_address(outputs,receiver)
-    
+    // expect functionArgs: Beneficiary =
+    //   cross_msg_data.functionCallData.functionArgs
+    expect Some(functionArgsData) =
+      deserialise(cross_msg_data.functionCallData.functionArgs)
+    expect functionArgs: Beneficiary = functionArgsData
+    expect LocalAddress(receiver) = functionArgs.address
+    let value_at_target = value_at_address(outputs, receiver)
     expect [Pair(mint_token_name, quantity)] =
       mint |> assets.tokens(mint_policy) |> dict.to_pairs()
-    expect [Pair(inbound_token_name, inbound_token_quantity)] =
-      mint |> assets.tokens(inbound_policy) |> dict.to_pairs()
 
-    
+    // expect [Pair(inbound_token_name, inbound_token_quantity)] =
+    //   mint |> assets.tokens(inbound_policy) |> dict.to_pairs()
+    expect [Pair(inbound_token_name, _)] =
+      own_input.output.value |> assets.tokens(inbound_policy) |> dict.to_pairs()
     // 1. check mint amount is equal to functionArgs.amount
-    quantity == cross_msg_data.functionCallData.functionArgs.amount 
-    && assets.quantity_of(
-      own_input.output.value,
+    (quantity == functionArgs.amount)? && // && (assets.quantity_of(
+    //   own_input.output.value,
+    //   inbound_policy,
+    //   inbound_token_name,
+    // ) == -inbound_token_quantity)? 
+    (sourceContract == remoteContract)? && (assets.quantity_of(
+      value_at_target,
+      mint_policy,
+      mint_token_name,
+    ) == quantity)? && (assets.quantity_of(
+      total_input_value,
       inbound_policy,
       inbound_token_name,
-    ) == -inbound_token_quantity 
-    && sourceContract == remoteContract
-    && assets.quantity_of(value_at_target,mint_policy,mint_token_name) == quantity
-    && assets.quantity_of(total_input_value,inbound_policy,inbound_token_name) == 1
+    ) == 1)?
   }
 
   else(_) {
