@@ -229,7 +229,7 @@ async function fetchTask(provider: BlockfrostProvider, taskType: TaskType) {
 
 async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<string> {
 
-    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: ogmios });
+    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: provider });
 
     let assets = [{
         unit: contractsInfo.demoTokenPolicy + defaultConfig.demoTokenName,
