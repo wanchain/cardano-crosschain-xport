@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-16 19:54:21
+ * @LastEditTime: 2025-12-16 21:02:11
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -30,7 +30,7 @@ dotenv.config({ path: path.join(__dirname, '../', '.env') });
 
 const receiverOnAda = 'addr_test1qpm0q3dmc0cq4ea75dum0dgpz4x5jsdf6jk0we04yktpuxnk7pzmhslsptnmagmek76sz92df9q6n49v7ajl2fvkrcdq9semsd';
 const receiverOnEvm = '0x1d1e18e1a484d0a10623661546ba97DEfAB7a7AE'.toLowerCase();
-const CROSS_TRANSFER_AMOUNT = 1000000;
+const CROSS_TRANSFER_AMOUNT = 1000;
 
 console.log(`inboundDemoScript address: ${contractsInfo.inboundDemoAddress}`);
 console.log(`inboundTokenScript policy: ${contractsInfo.inboundTokenPolicy}`);
@@ -79,7 +79,11 @@ enum TaskStatus {
     SUCCESS = 'success',
     FAILED = 'failed'
 }
+
 console.log('--[', serializeData(genBeneficiaryData(receiverOnAda, 10000)), ']');
+const test_datum = serializeData(genBeneficiaryData(receiverOnEvm, 10000))
+console.log('--[', test_datum, ']');
+console.log('--[', getBeneficiaryFromCbor(test_datum), ']');
 class Task implements TaskInfo {
     readonly id: string;
     readonly fromChainId: bigint;
@@ -96,26 +100,36 @@ class Task implements TaskInfo {
 
     constructor(utxo: UTxO) {
         if (!utxo.output.plutusData) throw 'utxo is not a task';
-        const msgCrossData = getMsgCrossDataFromCbor(utxo.output.plutusData);
-        this.id = msgCrossData.msgId;
-        this.fromChainId = msgCrossData.fromChainId;
-        this.fromContract = msgCrossData.fromContract;
-        this.toChainId = msgCrossData.toChainId;
-        this.targetContract = msgCrossData.targetContract;
-        this.gasLimit = msgCrossData.gasLimit;
-        this.functionCallData = msgCrossData.functionCallData;
-
-        if (utxo.output.amount.find((item) => (item.unit.indexOf(defaultConfig.INBOUND_POLICY) == 0) || (item.unit == 'lovelace') && defaultConfig.INBOUND_POLICY == "")) {
+        if (utxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.inboundTokenPolicy) == 0))) {
             this.taskType = TaskType.INBOUND;
-        } else if (utxo.output.amount.find((item) => (item.unit.indexOf(defaultConfig.OUTBOUND_POLICY) == 0) || (item.unit == 'lovelace') && defaultConfig.OUTBOUND_POLICY == "")) {
-            this.taskType = TaskType.OUTBOUND;
-            this.id = utxo.input.txHash;
+            const msgCrossData = getMsgCrossDataFromCbor(utxo.output.plutusData);
+            this.id = msgCrossData.msgId;
+            this.fromChainId = msgCrossData.fromChainId;
+            this.fromContract = msgCrossData.fromContract;
+            this.toChainId = msgCrossData.toChainId;
+            this.targetContract = msgCrossData.targetContract;
+            this.gasLimit = msgCrossData.gasLimit;
+            this.functionCallData = msgCrossData.functionCallData;
+        } else {
             const beneficiary = getBeneficiaryFromCbor(utxo.output.plutusData);
+            this.taskType = TaskType.OUTBOUND;
+            this.id = '';
+            this.fromChainId = BigInt(defaultConfig.AdaChainId);
+            this.fromContract = contractsInfo.outboundDemoAddress;
+            this.toChainId = BigInt(defaultConfig.EvmChainId);
+            this.targetContract = defaultConfig.EvmContractADDRESS
+            this.gasLimit = 2000000n;
+            this.functionCallData = {
+                functionName: 'wmbReceive',
+                functionArgs: { receiver: beneficiary.receiver, amount: beneficiary.amount }
+            };
+            
             const asset = utxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.demoTokenPolicy) == 0));
             if (!asset || BigInt(asset.quantity) < BigInt(beneficiary.amount)) { throw 'utxo is not a task,not enough token' };
-        } else {
-            throw 'utxo is not a task';
         }
+
+
+
         // if (!this.taskType) throw 'utxo is not a task';
         // console.log('222222222',datum.fields[4])
         // this.functionCallData = {
@@ -272,7 +286,7 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
 }
 
 async function doTask(n: number = 1) {
-    const tasks = inboundTaskPool.popTask(n);
+    const tasks = inboundTaskPool.popTask(n).concat(outboundTaskPool.popTask(n));
     if (tasks.length <= 0) return;
 
     const confirmTx = (txHash: string): Promise<void> => {
@@ -353,9 +367,8 @@ function genMsgCrossData(to: string, amount: string | bigint | number, direction
 
 function getBeneficiaryFromCbor(hex: string) {
     const datum = deserializeDatum(hex);
-    // console.log('hex:', hex);
-    // console.log('datum--: ', datum.fields[0])
-    const receiver = datum.fields[0].constructor == 0n ? datum.fields[0].bytes : serializeAddressObj(datum.fields[0].fields[0], defaultConfig.NETWORK);
+    const subDatum = datum.fields[0];
+    const receiver = subDatum.constructor == 0n ? subDatum.fields[0].bytes : serializeAddressObj(subDatum.fields[0].fields[0], defaultConfig.NETWORK);
     const amount = datum.fields[1].int;
 
     return { receiver, amount };
@@ -419,37 +432,37 @@ async function createInboundTask(to: string, amount: string | bigint | number) {
 
 async function createOutboundTask(wallet: MeshWallet, to: string, amount: string | bigint | number) {
     // const utxos = await walletUser.getUtxos();
-    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, });
+    // const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, });
 
-    let assets = [{ unit: 'lovelace', quantity: '1300000' }, { unit: contractsInfo.demoTokenPolicy + defaultConfig.demoTokenName, quantity: BigInt(amount).toString(10) }];
+    let assets = [{ unit: contractsInfo.demoTokenPolicy + defaultConfig.demoTokenName, quantity: BigInt(amount).toString(10) }];
     // const { scriptAddress } = getOutboundDemoScript();contractsInfo.outboundDemoAddress
-    const datum = mConStr0([]);
-    let outputOfTarget: Output = {
-        address: contractsInfo.outboundDemoAddress,
-        amount: assets,
-        datum: {
-            type: 'Inline',
-            data: {
-                type: "Mesh",
-                content: datum
-            }
-        }
-    }
+    const datum = genBeneficiaryData(to, amount);
+    // let outputOfTarget: Output = {
+    //     address: contractsInfo.outboundDemoAddress,
+    //     amount: assets,
+    //     datum: {
+    //         type: 'Inline',
+    //         data: {
+    //             type: "Mesh",
+    //             content: datum
+    //         }
+    //     }
+    // }
 
 
-    const minAda = txBuilder.calculateMinLovelaceForOutput(outputOfTarget);
-    assets.push({ unit: 'lovelace', quantity: minAda.toString(10) });
+    // const minAda = txBuilder.calculateMinLovelaceForOutput(outputOfTarget);
+    // assets.push({ unit: 'lovelace', quantity: minAda.toString(10) });
 
-    const tx = new Transaction({ initiator: walletInbound })
-        .sendLovelace({
+    const tx = new Transaction({ fetcher: provider, submitter: provider, initiator: wallet })
+        .sendAssets({
             address: contractsInfo.outboundDemoAddress,
             datum: { value: datum, inline: true },
-        }, minAda.toString(10));
+        }, assets);
     const unsignedTx = await tx.build();
     // console.log(unsignedTx);
-    const signedTx = await walletInbound.signTx(unsignedTx);
+    const signedTx = await wallet.signTx(unsignedTx);
     // console.log(signedTx);
-    const txHash = await walletInbound.submitTx(signedTx);
+    const txHash = await wallet.submitTx(signedTx);
     console.log(`create outbound Task tx: ${txHash}`);
     return txHash;
 }
@@ -468,9 +481,17 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
         quantity: '1'
     }];
 
+    const outboundDatum = genMsgCrossData(beneficiary.receiver, beneficiary.amount, TaskType.OUTBOUND);
     const minAda = txBuilder.calculateMinLovelaceForOutput({
         address: contractsInfo.xportAddress,
-        amount: assetsOfOutboundToken
+        amount: assetsOfOutboundToken,
+        datum: {
+            type: 'Inline',
+            data: {
+                type: "Mesh",
+                content: outboundDatum
+            }
+        }
     });
     assetsOfOutboundToken.push({ unit: 'lovelace', quantity: minAda.toString(10) });
     const utxos = await wallet.getUtxos();
@@ -479,7 +500,7 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
     //   burn_token_name: AssetName,
     //   xport: Address,
     const outboundRedeemer = mConStr0([contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName, betch32AddressToMeshData(contractsInfo.xportAddress)]);
-    const outboundDatum = genMsgCrossData(beneficiary.receiver, beneficiary.amount, TaskType.OUTBOUND);
+    
     const changeAddress = await wallet.getChangeAddress();
     await txBuilder
         .spendingPlutusScript(contractsInfo.outboundDemoScript.version)
@@ -498,7 +519,8 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
             collateral.output.amount,
             collateral.output.address
         )
-        .changeAddress(changeAddress).selectUtxosFrom(utxos).complete();
+        .changeAddress(changeAddress).selectUtxosFrom(utxos)
+        .complete();
     const unsignedTx = txBuilder.txHex;
     const signedTx = await wallet.signTx(unsignedTx);
     // const exUnit = await provider.evaluateTx(signedTx);
