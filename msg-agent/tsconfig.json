@@ -1,12 +1,10 @@
 {
     "compilerOptions": {
-        "sourceMap": true, // 必须为 true
-        "outDir": "./dist", // 指定输出目录
+        "sourceMap": true, 
+        "outDir": "./dist", 
         "target": "es2022",
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true
-        // "moduleResolution": "node16"
-        // ... 其他配置
     }
 }
