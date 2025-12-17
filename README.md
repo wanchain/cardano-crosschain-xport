@@ -38,15 +38,15 @@ data CrossMsgData = CrossMsgData
   }deriving (Show, Prelude.Eq)
   ```
 
-1. taskId：Unique identifier for the message. Note that for outbound TX scenario, the taskId is a fixed empty string, and the final value will be generated based on the outbound Tx hash by offchain agent.
-2. sourceChainId：The source blockchain id of the message.
-3. sourceContract：The contract address of the initiator of the message.
-4. targetChainId：The destination blockchain id of the message.
-5. targetContract：The contract address of the destination of this message。
+1. taskId:Unique identifier for the message. Note that for outbound TX scenario, the taskId is a fixed empty string, and the final value will be generated based on the outbound Tx hash by offchain agent.
+2. sourceChainId:The source blockchain id of the message.
+3. sourceContract:The contract address of the initiator of the message.
+4. targetChainId:The destination blockchain id of the message.
+5. targetContract:The contract address of the destination of this message.
 6. gasLimit: The upper limit of gas required for the message to be executed on the target chain. Note that for inbound TX scenario, it has no meaning.
-7. functionCallData：Message execution parameters，including：
-    - functionName：The name of the function that executes the message on the target chain, encoded in ascii. Note that it is fixed string of wmbReceive.
-    - functionArgs：The parameters of the calling function, encoded in cbor. Note that Note that it is content is business specific and DApp can customize it accordingly.
+7. functionCallData:Message execution parameters,including:
+    - functionName:The name of the function that executes the message on the target chain, encoded in ascii. Note that it is fixed string of wmbReceive.
+    - functionArgs:The parameters of the calling function, encoded in cbor. Note that Note that it is content is business specific and DApp can customize it accordingly.
 
 ### InBound Message:
 The Xport system will mint an InboundToken to the address of the third-party contract (targetContract, as DAppIn) specified in the message. 

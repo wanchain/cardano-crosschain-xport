@@ -1,11 +1,3 @@
-/*
- * @Author: liulin blue-sky-dl5@163.com
- * @Date: 2025-12-05 22:43:24
- * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-16 09:28:07
- * @FilePath: /msg-demo-project/msg-agent/src/config.ts
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 import { currencySymbol } from "@meshsdk/core";
 import { config } from "dotenv";
 import * as plutus from './plutus.json'
@@ -16,10 +8,8 @@ export interface Validator {
     plutusVersion: "V3" | "V2" | "V1"
 }
 export interface Config {
-    INBOUND_POLICY: string;
-    OUTBOUND_POLICY: string;
     OUTBOUND_TOKEN_NAME: string;
-    XPORT: string;
+    GroupNftHolder: string;
     NETWORK: number;
     EvmContractADDRESS: string;
     demoTokenName: string;
@@ -40,12 +30,10 @@ const loadContractComp = (name: string) => {
 };
 
 export const defaultConfig: Config = {
-    INBOUND_POLICY: "ff56a8bd303d866fef9cc1c658a65de6ebf6362f1ffbd8c7247d7253",
-    OUTBOUND_POLICY: "68dcf7ced6472998aabf2e4a4b0d1719af75a62c62cd4a91bd499919",
     OUTBOUND_TOKEN_NAME: Buffer.from("OutboundTokenCoin", 'ascii').toString('hex'),
-    XPORT: '',
-    NETWORK: 0, //testnet
-    EvmContractADDRESS: Buffer.from('0x2d37e62ee7d72d5b072d8b027af244960ffa0920','ascii').toString('hex'),
+    GroupNftHolder: 'addr_test1wpm9vmfxjk0lcrcwzfx76zmcyxpfluux9cwppyu9639thycpks2wj',
+    NETWORK: 0, //0 testnet 1 mainnet
+    EvmContractADDRESS: '0x2d37e62ee7d72d5b072d8b027af244960ffa0920'.toLowerCase(),
     demoTokenName:  Buffer.from('DemoToken','ascii').toString('hex'),
     demoInbound: loadContractComp('demo_inbound.inbound.spend'),
     demoOutbound: loadContractComp('demo_outbound.outbound.spend'),

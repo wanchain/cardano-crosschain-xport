@@ -2,11 +2,11 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-16 23:30:28
+ * @LastEditTime: 2025-12-17 17:36:22
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import { BlockfrostProvider, MeshTxBuilder, MeshWallet, UtxoSelection, deserializeDatum, serializeAddressObj, serializePlutusScript, policyId, AssetFingerprint, Asset, Output, resolveScriptHash, mConStr0, deserializeAddress, Transaction, MintingBlueprint, Mint, Wallet, TxParser, serializeData, OgmiosProvider } from '@meshsdk/core';
+import { BlockfrostProvider, MeshTxBuilder, MeshWallet, UtxoSelection, deserializeDatum, serializeAddressObj, serializePlutusScript, policyId, AssetFingerprint, Asset, Output, resolveScriptHash, mConStr0, deserializeAddress, Transaction, MintingBlueprint, Mint, Wallet, TxParser, serializeData, OgmiosProvider, resolveDataHash } from '@meshsdk/core';
 import { conStr0, Data, mConStr1, mMaybeStakingHash, mPlutusBSArrayToString, mPubKeyAddress, mScriptAddress, stringToHex, UTxO } from "@meshsdk/common";
 import contractsInfo from "./scripts";
 import dotenv from 'dotenv';
@@ -19,18 +19,9 @@ import fs from 'fs';
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../', '.env') });
 
-// const provider = new BlockfrostProvider(process.env.BLOCKFROST_API_KEY);
-
-// provider.fetchAddressUTxOs('addr_test1qz6twkzgss75sk379u0e27phvwhmtqqfuhl5gnx7rh7nux2xg4uwrhx9t58far8hp3a06hfdfzlsxgfrzqv5ryc78e4s4dwh26')
-// const outboundTokenScriptInfo = getOutboundTokenScript();
-// const inboundDemoScriptInfo = getInboundDemoScript();
-// const demoTokenScriptInfo = getDemoTokenSCript();
-// const outboundDemoScriptInof = getOutboundDemoScript();
-
-
 const receiverOnAda = 'addr_test1qpm0q3dmc0cq4ea75dum0dgpz4x5jsdf6jk0we04yktpuxnk7pzmhslsptnmagmek76sz92df9q6n49v7ajl2fvkrcdq9semsd';
 const receiverOnEvm = '0x1d1e18e1a484d0a10623661546ba97DEfAB7a7AE'.toLowerCase();
-const CROSS_TRANSFER_AMOUNT = 500;
+const CROSS_TRANSFER_AMOUNT = 20;
 
 console.log(`inboundDemoScript address: ${contractsInfo.inboundDemoAddress}`);
 console.log(`inboundTokenScript policy: ${contractsInfo.inboundTokenPolicy}`);
@@ -47,8 +38,8 @@ console.log(`demoTokenScrip policy: ${contractsInfo.demoTokenPolicy}`);
 // if(!process.env.BLOCKFROST_API_KEY) throw 'BLOCKFROST_API_KEY is not set'
 const provider = new BlockfrostProvider(process.env.BLOCKFROST_API_KEY ? process.env.BLOCKFROST_API_KEY : '');
 const ogmiosUrl = 'https://ogmios1uxnqpx0u6erjzpcfdtk.cardano-preprod-v6.ogmios-m1.dmtr.host';
-// const ogmiosUrl = '52.13.9.234:1337';
-const ogmios = new OgmiosProvider(ogmiosUrl)
+
+const ogmios = new OgmiosProvider(ogmiosUrl);
 
 interface TransferInfo {
     receiver: string;
@@ -74,16 +65,14 @@ enum TaskType {
 };
 
 enum TaskStatus {
-    IDLE = 'idle',
-    PENDING = 'pending',
-    SUCCESS = 'success',
-    FAILED = 'failed'
+    READY = 'ready',
+    DONE = 'done'
 }
 
-console.log('--[', serializeData(genBeneficiaryData(receiverOnAda, 10000)), ']');
-const test_datum = serializeData(genBeneficiaryData(receiverOnEvm, 10000))
-console.log('--[', test_datum, ']');
-console.log('--[', getBeneficiaryFromCbor(test_datum), ']');
+// console.log('--[', serializeData(genBeneficiaryData(receiverOnAda, 10000)), ']');
+// const test_datum = serializeData(genBeneficiaryData(receiverOnEvm, 10000))
+// console.log('--[', test_datum, ']');
+// console.log('--[', getBeneficiaryFromCbor(test_datum), ']');
 class Task implements TaskInfo {
     readonly id: string;
     readonly fromChainId: bigint;
@@ -113,31 +102,23 @@ class Task implements TaskInfo {
         } else {
             const beneficiary = getBeneficiaryFromCbor(utxo.output.plutusData);
             this.taskType = TaskType.OUTBOUND;
-            this.id = '';
+            this.id = utxo.input.txHash + '#' + utxo.input.outputIndex;//resolveDataHash(mConStr0([utxo.input.txHash, utxo.input.outputIndex]));//give unique id for convenient indexing
             this.fromChainId = BigInt(defaultConfig.AdaChainId);
             this.fromContract = contractsInfo.outboundDemoAddress;
             this.toChainId = BigInt(defaultConfig.EvmChainId);
-            this.targetContract = defaultConfig.EvmContractADDRESS
+            this.targetContract = defaultConfig.EvmContractADDRESS;
             this.gasLimit = 2000000n;
             this.functionCallData = {
                 functionName: 'wmbReceive',
                 functionArgs: { receiver: beneficiary.receiver, amount: beneficiary.amount }
             };
-            
+
             const asset = utxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.demoTokenPolicy) == 0));
             if (!asset || BigInt(asset.quantity) < BigInt(beneficiary.amount)) { throw 'utxo is not a task,not enough token' };
         }
 
-
-
-        // if (!this.taskType) throw 'utxo is not a task';
-        // console.log('222222222',datum.fields[4])
-        // this.functionCallData = {
-        //     functionName: tmpCallData.fields[0].bytes,
-        //     functionArgs: { receiver: serializeAddressObj(tmpCallData.fields[1].fields[0], 0), amount: tmpCallData.fields[1].fields[1].int }
-        // }
         this.utxo = utxo;
-        this.status = TaskStatus.IDLE;
+        this.status = TaskStatus.READY;
     }
 
 }
@@ -152,9 +133,10 @@ class TaskPool {
     }
 
     push(task: Task) {
-        if (this.taskMap.has(task.id)) return;
-        this.taskMap.set(task.id, task);
-        this.taskQueue.push(task);
+        if (task.status == TaskStatus.READY) {
+            this.taskMap.set(task.id, task);
+            this.taskQueue.push(task);
+        }
     }
 
     isExist(taskId: string) {
@@ -165,37 +147,12 @@ class TaskPool {
         return this.taskQueue.length;
     }
 
-    popTask(n: number): Task[] {
-        if (this.taskQueue.length == 0) return [];
-        const tasks: Task[] = [];
-        this.taskQueue.forEach(task => {
-            if (task.status == TaskStatus.IDLE) {
-                task.status = TaskStatus.PENDING;
-                tasks.push(task);
-                if (tasks.length == n) return tasks;
-            }
-        });
-        return tasks;
+    popTask(): Task | undefined {
+        return this.taskQueue.shift();
     }
 
-    removeDone() {
-        let taskIds = [];
-        for (const [taskId, task] of this.taskMap) {
-            if (task.status == TaskStatus.SUCCESS) {
-                taskIds.push(taskId);
-            }
-        }
-
-        if (taskIds.length) console.log(`remove finished task(${taskIds.length}):${taskIds}`);
-        for (let index = 0; index < taskIds.length; index++) {
-            const taskId = taskIds[index];
-            this.taskMap.delete(taskId);
-        }
-
-        this.taskQueue = [];
-        this.taskMap.forEach(task => {
-            this.taskQueue.push(task);
-        })
+    removeDone(taskId: string) {
+        this.taskMap.delete(taskId);
     }
 }
 
@@ -219,7 +176,8 @@ async function fetchTask(provider: BlockfrostProvider, taskType: TaskType) {
                 return;
             }
             taskPool.push(task);
-            console.log(`add ${taskType} task : ${task.id}, current task pool size: ${taskPool.size()} receiver: ${task.functionCallData.functionArgs.receiver}, amount: ${task.functionCallData.functionArgs.amount}`);
+
+            console.log(`add ${taskType} task : [${task.id}], current task pool size: ${taskPool.size()} receiver: ${task.functionCallData.functionArgs.receiver}, amount: ${task.functionCallData.functionArgs.amount}`);
         } catch (error) {
             console.log(`${utxo.input.txHash}#${utxo.input.outputIndex} is not a valid ${taskType} task`);
             console.error(error);
@@ -243,7 +201,7 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
     assets.push({ unit: 'lovelace', quantity: minAda.toString(10) });
     const utxos = await wallet.getUtxos();
     const collateral = (await wallet.getCollateral())[0];
-    console.log(JSON.stringify(collateral));
+    // console.log(JSON.stringify(collateral));
     const inboundTokenAssetOfUtxo = task.utxo.output.amount.find(asset => asset.unit.indexOf(contractsInfo.inboundTokenPolicy) == 0);
     const inboundTokenPolicy = inboundTokenAssetOfUtxo?.unit.slice(0, 56);
     const inboundTokenName = inboundTokenAssetOfUtxo?.unit.slice(56);
@@ -285,42 +243,61 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
     return txHash;
 }
 
-async function doTask(n: number = 1) {
-    const tasks = inboundTaskPool.popTask(n).concat(outboundTaskPool.popTask(n));
-    if (tasks.length <= 0) return;
+async function doTask(taskType: TaskType) {
 
-    const confirmTx = (txHash: string): Promise<void> => {
-        return new Promise((resolve) => {
-            provider.onTxConfirmed(txHash, () => {
-                resolve();
-            }, 1);
-        });
-    }
-
-
-    tasks.forEach(async task => {
-        console.log(`Begin to excute ${task.taskType} task:[${task.id}] receiver:${task.functionCallData.functionArgs.receiver} amount:${task.functionCallData.functionArgs.amount}]`);
-        let txHash;
-        switch (task.taskType) {
-            case TaskType.INBOUND: {
-                txHash = await sendTxDoInboundTask(walletInbound, task);
-                break;
+    let taskPool = taskType == TaskType.INBOUND ? inboundTaskPool : outboundTaskPool;
+    let task = taskPool.popTask();
+    while (task) {
+        console.log(`Begin to excute ${task.taskType} task:[${task.id}] receiver:${task.functionCallData.functionArgs.receiver} amount:${task.functionCallData.functionArgs.amount}`);
+        let txHash: string;
+        try {
+            switch (task.taskType) {
+                case TaskType.INBOUND: {
+                    txHash = await sendTxDoInboundTask(walletInbound, task);
+                    break;
+                }
+                case TaskType.OUTBOUND: {
+                    txHash = await sendTxDoOutboundTask(walletOutbound, task);
+                    break;
+                }
+                default: break;
             }
-            case TaskType.OUTBOUND: {
-                txHash = await sendTxDoOutboundTask(walletOutbound, task);
-                break;
-            }
-
-            default:
-                break;
+        } catch (error) {
+            console.error(`send Tx failed for do ${taskType} task ${task.id}`, error);
         }
+
 
         if (txHash) {
-            await confirmTx(txHash);
+            const confirmTx = async (txHash: string) => {
+                while (true) {
+                    try {
+                        const tx = await provider.fetchTxInfo(txHash);
+                        const block = await provider.fetchBlockInfo(tx.block);
+                        if (block.confirmations >= 1) {
+                            break;
+                        }
+                    } catch (error) {
+                    }
+
+                    await sleep(5000);
+                }
+
+            }
             task.finishedTx = txHash;
-            task.status = TaskStatus.SUCCESS;
+            task.status = TaskStatus.DONE;
+            console.log(`${task.taskType} task [${task.id}] has done successfully`);
+            taskPool.removeDone(task.id);
+
+            try {
+                await timeout(60000, confirmTx(txHash));
+                console.log(`${task.taskType} task [${task.id}] has confirmed successfully`);
+            } catch (e) {
+                console.log(`confirm ${task.taskType} task [${task.id}] timeout, force delete task`);
+            }
         }
-    })
+
+        task = taskPool.popTask();
+    }
 
 }
 
@@ -350,16 +327,16 @@ function genBeneficiaryData(receiver: string, amount: string | bigint | number) 
     return mConStr0([to, amount]);
 }
 function genMsgCrossData(to: string, amount: string | bigint | number, direction: TaskType) {
-    const script = direction == TaskType.INBOUND?contractsInfo.inboundDemoScript:contractsInfo.outboundDemoScript;
+    const script = direction == TaskType.INBOUND ? contractsInfo.inboundDemoScript : contractsInfo.outboundDemoScript;
     const scriptHash = resolveScriptHash(script.code, script.version);
-    const taskId = direction == TaskType.INBOUND ? Buffer.alloc(32, Math.random().toString(16)).toString('hex') : '';
+    const taskId = '';//direction == TaskType.INBOUND ? Buffer.alloc(32, Math.random().toString(16)).toString('hex') : '';
     const fromChainId = direction == TaskType.INBOUND ? defaultConfig.EvmChainId : defaultConfig.AdaChainId;
-    const fromAddress = direction == TaskType.OUTBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([defaultConfig.EvmContractADDRESS]);
+    const fromAddress = direction == TaskType.OUTBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([Buffer.from(defaultConfig.EvmContractADDRESS, 'ascii').toString('hex')]);
     const toChainId = direction == TaskType.INBOUND ? defaultConfig.AdaChainId : defaultConfig.EvmChainId;
 
-    const toAddress = direction == TaskType.INBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([defaultConfig.EvmContractADDRESS]);
+    const toAddress = direction == TaskType.INBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([Buffer.from(defaultConfig.EvmContractADDRESS, 'ascii').toString('hex')]);
     const gasLimit = 2000000;//should to be a config feild
-    // const receiver = direction == TaskType.INBOUND ? mConStr1([betch32AddressToMeshData(to)]): mConStr0([Buffer.from(to,'ascii').toString('hex')]);
+
     const tmpCallData = mConStr0(['wmbReceive', serializeData(genBeneficiaryData(to, amount))]);
     return mConStr0([taskId, fromChainId, fromAddress, toChainId, toAddress, gasLimit, tmpCallData]);
     // return mConStr0([receiver, amount]);
@@ -368,7 +345,7 @@ function genMsgCrossData(to: string, amount: string | bigint | number, direction
 function getBeneficiaryFromCbor(hex: string) {
     const datum = deserializeDatum(hex);
     const subDatum = datum.fields[0];
-    const receiver = subDatum.constructor == 0n ? subDatum.fields[0].bytes : serializeAddressObj(subDatum.fields[0].fields[0], defaultConfig.NETWORK);
+    const receiver = subDatum.constructor == 0n ? Buffer.from(subDatum.fields[0].bytes, 'hex').toString('ascii') : serializeAddressObj(subDatum.fields[0], defaultConfig.NETWORK);
     const amount = datum.fields[1].int;
 
     return { receiver, amount };
@@ -378,10 +355,10 @@ function getMsgCrossDataFromCbor(hex: string) {
     const datum = deserializeDatum(hex);
     const msgId = datum.fields[0].bytes;
     const fromChainId = datum.fields[1].int;
-    const fromContract = datum.fields[2].constructor == 0n ? datum.fields[2].fields[0].bytes : serializeAddressObj(datum.fields[2].fields[0], defaultConfig.NETWORK);
+    const fromContract = datum.fields[2].constructor == 0n ? Buffer.from(datum.fields[2].fields[0].bytes, 'hex').toString('ascii') : serializeAddressObj(datum.fields[2].fields[0], defaultConfig.NETWORK);
     const toChainId = datum.fields[3].int;
 
-    const targetContract = datum.fields[4].constructor == 0n ? datum.fields[4].fields[0].bytes : serializeAddressObj(datum.fields[4].fields[0], defaultConfig.NETWORK);
+    const targetContract = datum.fields[4].constructor == 0n ? Buffer.from(datum.fields[4].fields[0].bytes, 'hex').toString('ascii') : serializeAddressObj(datum.fields[4].fields[0], defaultConfig.NETWORK);
     const gasLimit = datum.fields[5].int;
     // console.log('=====-->',datum.fields.length,datum.fields[6].fields[1]);
     const tmpCallData = datum.fields[6].fields[1].bytes;
@@ -396,7 +373,7 @@ function getMsgCrossDataFromCbor(hex: string) {
 
 async function createInboundTask(to: string, amount: string | bigint | number) {
     const utxos = await walletInbound.getUtxos();
-    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, });
+    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: provider });
 
     let assets = [{ unit: 'lovelace', quantity: '1200000' }];
     const datum = genMsgCrossData(to, amount, TaskType.INBOUND);
@@ -475,11 +452,14 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
     const asset = outboundTaskUtxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.demoTokenPolicy) == 0));
     if (!asset || BigInt(asset.quantity) < BigInt(beneficiary.amount)) { throw 'not enough token' };
 
-    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: ogmios });
+    const txBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider, evaluator: provider });
     let assetsOfOutboundToken = [{
         unit: contractsInfo.outboundTokenPolicy + defaultConfig.OUTBOUND_TOKEN_NAME,
         quantity: '1'
     }];
+
+    const groupNftUtxo = (await provider.fetchAddressUTxOs(defaultConfig.GroupNftHolder))[0];
+
 
     const outboundDatum = genMsgCrossData(beneficiary.receiver, beneficiary.amount, TaskType.OUTBOUND);
     const minAda = txBuilder.calculateMinLovelaceForOutput({
@@ -501,7 +481,7 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
     //   xport: Address,
 
     const outboundRedeemer = mConStr0([contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName, betch32AddressToMeshData(contractsInfo.xportAddress)]);
-    
+
     const changeAddress = await wallet.getChangeAddress();
     await txBuilder
         .spendingPlutusScript(contractsInfo.outboundDemoScript.version)
@@ -513,11 +493,12 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
         .mintingScript(contractsInfo.demoTokenScript.code)
         .mintRedeemerValue(mConStr0([]))
         .mintPlutusScript(contractsInfo.outboundTokenScript.version)
-        .mint('1',contractsInfo.outboundTokenPolicy, defaultConfig.OUTBOUND_TOKEN_NAME)
+        .mint('1', contractsInfo.outboundTokenPolicy, defaultConfig.OUTBOUND_TOKEN_NAME)
         .mintingScript(contractsInfo.outboundTokenScript.code)
         .mintRedeemerValue(mConStr0([]))
         .txOut(contractsInfo.xportAddress, assetsOfOutboundToken)
         .txOutInlineDatumValue(outboundDatum)
+        .readOnlyTxInReference(groupNftUtxo.input.txHash, groupNftUtxo.input.outputIndex)
         .txInCollateral(
             collateral.input.txHash,
             collateral.input.outputIndex,
@@ -529,7 +510,8 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
     const unsignedTx = txBuilder.txHex;
     const signedTx = await wallet.signTx(unsignedTx);
     // const exUnit = await provider.evaluateTx(signedTx);
-    console.log('outboundTransfer tx:', signedTx);
+    // console.log('outboundTransfer tx:', signedTx);
+    // fs.writeFileSync('./outbound.tx', signedTx);
     const txHash = await wallet.submitTx(signedTx);
     return txHash;
 }
@@ -554,12 +536,10 @@ async function sleep(milsec: number): Promise<void> {
     })
 }
 
-async function monitor() {
+async function monitor(taskType: TaskType) {
     while (1) {
-        await fetchTask(provider, TaskType.INBOUND);
-        await fetchTask(provider, TaskType.OUTBOUND);
-        await doTask(3);
-        inboundTaskPool.removeDone();
+        await fetchTask(provider, taskType);
+        await doTask(taskType);
         await sleep(5000);
     }
 }
@@ -584,11 +564,11 @@ async function walletReady(wallet: MeshWallet) {
 
     console.log('balance:');
     balance.forEach((item) => {
-        console.log('\t', item.unit, item.quantity);
+        console.log('    ', item.unit, item.quantity);
     });
     console.log('collateral utxo:');
     colleteralUtxo.forEach(utxo => {
-        console.log('\t', utxo.input.txHash, utxo.input.outputIndex, JSON.stringify(utxo.output.amount), utxo.output.address);
+        console.log('    ', utxo.input.txHash, utxo.input.outputIndex, JSON.stringify(utxo.output.amount), utxo.output.address);
     })
 }
 async function loadWallet(seed: string) {
@@ -605,13 +585,12 @@ async function loadWallet(seed: string) {
     });
 
     await wallet.init();
-    console.log('wallet address:', wallet.addresses.baseAddressBech32);
+
     return wallet;
 }
 
 
 async function main() {
-    // const aa = await ogmios.fetchProtocolParameters();
     walletInbound = await loadWallet('5820' + process.env.ACCOUNT_SEED1);
     walletOutbound = await loadWallet('5820' + process.env.ACCOUNT_SEED2);
     // walletUser = await loadWallet('5820' + process.env.ACCOUNT_SEED3);
@@ -619,7 +598,7 @@ async function main() {
     await walletReady(walletInbound);
     await walletReady(walletOutbound);
     // await walletReady(walletUser);
-    await monitor();
+    // await monitor(TaskType.INBOUND);
 }
 
 // main().catch((err) => {
@@ -642,13 +621,16 @@ program
     .description('Start monitoring inbound outbound tasks and processing them')
     .action(async () => {
         walletInbound = await loadWallet('5820' + process.env.ACCOUNT_SEED1);
+        console.log('wallet1 address:', walletInbound.addresses.baseAddressBech32);
         walletOutbound = await loadWallet('5820' + process.env.ACCOUNT_SEED2);
-        walletUser = await loadWallet('5820' + process.env.ACCOUNT_SEED3);
-
+        console.log('wallet2 address:', walletOutbound.addresses.baseAddressBech32);
+        // walletUser = await loadWallet('5820' + process.env.ACCOUNT_SEED3);
+        // const a = await ogmios.fetchProtocolParameters();
         await walletReady(walletInbound);
         await walletReady(walletOutbound);
         // await walletReady(walletUser);
-        await monitor();
+        monitor(TaskType.INBOUND);
+        monitor(TaskType.OUTBOUND);
     });
 
 program
