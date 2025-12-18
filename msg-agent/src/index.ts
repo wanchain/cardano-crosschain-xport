@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-17 17:36:22
+ * @LastEditTime: 2025-12-18 16:00:45
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -212,10 +212,10 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
         .spendingReferenceTxInInlineDatumPresent()
         .spendingReferenceTxInRedeemerValue(contractsInfo.demoTokenPolicy).txInScript(contractsInfo.inboundDemoScript.code)
 
-        // .mintPlutusScript(contractsInfo.inboundTokenScript.version)
-        // .mint('-' + inboundTokenAssetOfUtxo.quantity, inboundTokenPolicy, inboundTokenName)
-        // .mintingScript(contractsInfo.inboundTokenScript.code)
-        // .mintRedeemerValue(mConStr0([]))
+        .mintPlutusScript(contractsInfo.inboundTokenScript.version)
+        .mint('-' + inboundTokenAssetOfUtxo.quantity, inboundTokenPolicy, inboundTokenName)
+        .mintingScript(contractsInfo.inboundTokenScript.code)
+        .mintRedeemerValue(mConStr0([]))
 
         .mintPlutusScript(contractsInfo.demoTokenScript.version)
         .mint(BigInt(task.functionCallData.functionArgs.amount).toString(10), contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName)
@@ -247,17 +247,18 @@ async function doTask(taskType: TaskType) {
 
     let taskPool = taskType == TaskType.INBOUND ? inboundTaskPool : outboundTaskPool;
     let task = taskPool.popTask();
+    const wallet = taskType == TaskType.INBOUND ? walletInbound : walletOutbound;
     while (task) {
         console.log(`Begin to excute ${task.taskType} task:[${task.id}] receiver:${task.functionCallData.functionArgs.receiver} amount:${task.functionCallData.functionArgs.amount}`);
         let txHash: string;
         try {
             switch (task.taskType) {
                 case TaskType.INBOUND: {
-                    txHash = await sendTxDoInboundTask(walletInbound, task);
+                    txHash = await sendTxDoInboundTask(wallet, task);
                     break;
                 }
                 case TaskType.OUTBOUND: {
-                    txHash = await sendTxDoOutboundTask(walletOutbound, task);
+                    txHash = await sendTxDoOutboundTask(wallet, task);
                     break;
                 }
                 default: break;
@@ -271,10 +272,10 @@ async function doTask(taskType: TaskType) {
             const confirmTx = async (txHash: string) => {
                 while (true) {
                     try {
-                        const tx = await provider.fetchTxInfo(txHash);
-                        const block = await provider.fetchBlockInfo(tx.block);
-                        if (block.confirmations >= 1) {
-                            break;
+                        const worker = wallet.getAddresses().baseAddressBech32;
+                        const utxos = await provider.fetchAddressUTxOs(worker);
+                        if(utxos.findIndex(utxo=> utxo.input.txHash == txHash) >= 0) {
+                            return true;
                         }
                     } catch (error) {
                     }
@@ -285,12 +286,12 @@ async function doTask(taskType: TaskType) {
             }
             task.finishedTx = txHash;
             task.status = TaskStatus.DONE;
-            console.log(`${task.taskType} task [${task.id}] has done successfully`);
+            console.log(`${task.taskType} task [${task.id}] has done successfully at Tx: ${txHash}`);
             taskPool.removeDone(task.id);
 
             try {
                 await timeout(60000, confirmTx(txHash));
-                console.log(`${task.taskType} task [${task.id}] has confirmed successfully`);
+                console.log(`${task.taskType} task [${task.id}] has confirmed successfully at Tx: ${txHash}`);
             } catch (e) {
                 console.log(`confirm ${task.taskType} task [${task.id}] timeout, force delete task`);
             }
