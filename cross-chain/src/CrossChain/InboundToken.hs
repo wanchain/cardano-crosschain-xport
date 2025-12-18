@@ -72,8 +72,13 @@ mkPolicy  (CheckTokenInfo checkTokenSymbol checkTokenName) _ ctx =
       in amount == 1
 
     isBurn :: Bool
-    isBurn = case flattenValue $ V2.txInfoMint info of
-        [(symbol,_,a)] -> (symbol == ownCurrencySymbol ctx) && (a < 0)
+    isBurn = 
+      let mintValues = flattenValue $ V2.txInfoMint info
+          inboundValues = filter (\(symbol,_,_) -> symbol == (ownCurrencySymbol ctx)) mintValues
+      in 
+        case inboundValues of
+          [(_,_,a)] -> (a < 0)
+
 
 policy :: CheckTokenInfo -> V2.MintingPolicy
 policy oref = V2.mkMintingPolicyScript $ $$(PlutusTx.compile [|| \c -> V2.mkUntypedMintingPolicy (mkPolicy c)  ||]) 

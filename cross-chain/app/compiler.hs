@@ -135,14 +135,7 @@ import CrossChain.MappingToken
   , mappingTokenCurSymbol
   -- , MappingTokenParams (..)
   )
-
-import CrossChain.InboundToken
-  ( inboundTokenScript
-  , inboundTokenScriptShortBs
-  , inboundTokenCurSymbol
-  -- , CheckTokenInfo (..)
-  )
-
+  
 import CrossChain.MintCheck
   ( mintCheckScript
   ,mintCheckScriptHash
@@ -219,6 +212,13 @@ import CrossChain.XPort
   -- ,xPortScriptHashStr
   ,xPortAddress
   ,KeyParam (..)
+  )
+  
+import CrossChain.InboundToken
+  ( inboundTokenScript
+  , inboundTokenScriptShortBs
+  , inboundTokenCurSymbol
+  -- , CheckTokenInfo (..)
   )
 
 import PlutusTx.Builtins qualified as Builtins
