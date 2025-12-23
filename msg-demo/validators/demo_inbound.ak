@@ -10,10 +10,15 @@ use utils.{
   total_input_value, value_at_address,
 }
 
-validator inbound(inbound_policy: PolicyId, remoteContract: ByteArray) {
+pub type Redeemer {
+  mint_policy: PolicyId,
+  remoteContract: ByteArray,
+}
+
+validator inbound(inbound_policy: PolicyId) {
   spend(
     datum: Option<CrossMsgData>,
-    mint_policy: PolicyId,
+    redeemer: Redeemer,
     own_ref: OutputReference,
     self: Transaction,
   ) {
@@ -50,7 +55,7 @@ validator inbound(inbound_policy: PolicyId, remoteContract: ByteArray) {
     expect LocalAddress(receiver) = functionArgs.address
     let value_at_target = value_at_address(outputs, receiver)
     expect [Pair(mint_token_name, quantity)] =
-      mint |> assets.tokens(mint_policy) |> dict.to_pairs()
+      mint |> assets.tokens(redeemer.mint_policy) |> dict.to_pairs()
 
     // expect [Pair(inbound_token_name, inbound_token_quantity)] =
     //   mint |> assets.tokens(inbound_policy) |> dict.to_pairs()
@@ -62,9 +67,9 @@ validator inbound(inbound_policy: PolicyId, remoteContract: ByteArray) {
     //   inbound_policy,
     //   inbound_token_name,
     // ) == -inbound_token_quantity)? 
-    (sourceContract == remoteContract)? && (assets.quantity_of(
+    (sourceContract == redeemer.remoteContract)? && (assets.quantity_of(
       value_at_target,
-      mint_policy,
+      redeemer.mint_policy,
       mint_token_name,
     ) == quantity)? && (assets.quantity_of(
       total_input_value,

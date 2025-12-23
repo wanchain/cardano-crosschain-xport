@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-18 16:00:45
+ * @LastEditTime: 2025-12-23 17:06:40
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -210,7 +210,7 @@ async function sendTxDoInboundTask(wallet: MeshWallet, task: Task): Promise<stri
         .spendingPlutusScript(contractsInfo.inboundDemoScript.version)
         .txIn(task.utxo.input.txHash, task.utxo.input.outputIndex, task.utxo.output.amount, task.utxo.output.address, 0)
         .spendingReferenceTxInInlineDatumPresent()
-        .spendingReferenceTxInRedeemerValue(contractsInfo.demoTokenPolicy).txInScript(contractsInfo.inboundDemoScript.code)
+        .spendingReferenceTxInRedeemerValue(mConStr0([contractsInfo.demoTokenPolicy, defaultConfig.EvmContractADDRESS])).txInScript(contractsInfo.inboundDemoScript.code)
 
         .mintPlutusScript(contractsInfo.inboundTokenScript.version)
         .mint('-' + inboundTokenAssetOfUtxo.quantity, inboundTokenPolicy, inboundTokenName)
@@ -345,7 +345,7 @@ function genMsgCrossData(to: string, amount: string | bigint | number, direction
 function getBeneficiaryFromCbor(hex: string) {
     const datum = deserializeDatum(hex);
     const subDatum = datum.fields[0];
-    const receiver = subDatum.constructor == 0n ? Buffer.from(subDatum.fields[0].bytes, 'hex').toString('ascii') : serializeAddressObj(subDatum.fields[0], defaultConfig.NETWORK);
+    const receiver = subDatum.constructor == 0n ? subDatum.fields[0].bytes : serializeAddressObj(subDatum.fields[0], defaultConfig.NETWORK);
     const amount = datum.fields[1].int;
 
     return { receiver, amount };
@@ -480,7 +480,7 @@ async function sendTxDoOutboundTask(wallet: MeshWallet, task: Task) {
     //   burn_token_name: AssetName,
     //   xport: Address,
 
-    const outboundRedeemer = mConStr0([contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName, betch32AddressToMeshData(contractsInfo.xportAddress)]);
+    const outboundRedeemer = mConStr0([contractsInfo.demoTokenPolicy, defaultConfig.demoTokenName, betch32AddressToMeshData(contractsInfo.xportAddress),defaultConfig.EvmContractADDRESS]);
 
     const changeAddress = await wallet.getChangeAddress();
     await txBuilder
@@ -585,6 +585,7 @@ async function loadWallet(seed: string) {
     });
 
     await wallet.init();
+    console.log('wallet address:',wallet.addresses.baseAddressBech32);
 
     return wallet;
 }

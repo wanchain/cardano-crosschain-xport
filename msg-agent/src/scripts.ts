@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:59:03
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-17 12:30:09
+ * @LastEditTime: 2025-12-23 16:29:02
  * @FilePath: /msg-demo-project/msg-agent/scripts.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -25,7 +25,7 @@ import {defaultConfig} from "./config";
 
 export function getInboundDemoScript() {
   const oinboundTokenInfo = getInboundTokenScript();
-  const scriptCbor = applyParamsToScript(defaultConfig.demoInbound.compiledCode, [oinboundTokenInfo.policyId,defaultConfig.EvmContractADDRESS]);
+  const scriptCbor = applyParamsToScript(defaultConfig.demoInbound.compiledCode, [oinboundTokenInfo.policyId]);
   const script: PlutusScript = {
     code: scriptCbor,
     version: defaultConfig.demoInbound.plutusVersion,
@@ -36,7 +36,7 @@ export function getInboundDemoScript() {
 
 export function getOutboundDemoScript() {
   const outboundTokenInfo = getOutboundTokenScript();
-  const scriptCbor = applyParamsToScript(defaultConfig.demoOutbound.compiledCode, [outboundTokenInfo.policyId,defaultConfig.EvmContractADDRESS]);
+  const scriptCbor = applyParamsToScript(defaultConfig.demoOutbound.compiledCode, [outboundTokenInfo.policyId]);
   const script: PlutusScript = {
     code: scriptCbor,
     version: defaultConfig.demoOutbound.plutusVersion,

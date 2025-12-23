@@ -2,9 +2,9 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-17 17:48:37
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-23 15:11:57
+ * @LastEditTime: 2025-12-23 21:43:03
  * @FilePath: /msg-demo-project/msg-agent/src/config.ts
- * @Description: ??????,???`customMade`, ??koroFileHeader???? ????: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { currencySymbol } from "@meshsdk/core";
 import { config } from "dotenv";
@@ -41,7 +41,7 @@ export const defaultConfig: Config = {
     OUTBOUND_TOKEN_NAME: Buffer.from("OutboundTokenCoin", 'ascii').toString('hex'),
     GroupNftHolder: 'addr_test1wpm9vmfxjk0lcrcwzfx76zmcyxpfluux9cwppyu9639thycpks2wj',
     NETWORK: 0, //0 testnet 1 mainnet
-    EvmContractADDRESS: '0x2d37e62ee7d72d5b072d8b027af244960ffa0920'.slice(2).toLowerCase(),
+    EvmContractADDRESS: '0x2d37e62ee7d72d5b072d8b027af244960ffa0920'.toLowerCase(),
     demoTokenName:  Buffer.from('DemoToken','ascii').toString('hex'),
     demoInbound: loadContractComp('demo_inbound.inbound.spend'),
     demoOutbound: loadContractComp('demo_outbound.outbound.spend'),
