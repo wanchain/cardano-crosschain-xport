@@ -4,7 +4,6 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@meshsdk/contract": "^1.9.0-beta.89",
     "@meshsdk/core": "^1.9.0-beta.89",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3"

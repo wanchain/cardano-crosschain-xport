@@ -20,7 +20,7 @@ import fs from 'fs';
 dotenv.config({ path: path.join(__dirname, '../', '.env') });
 
 const receiverOnAda = 'addr_test1qpm0q3dmc0cq4ea75dum0dgpz4x5jsdf6jk0we04yktpuxnk7pzmhslsptnmagmek76sz92df9q6n49v7ajl2fvkrcdq9semsd';
-const receiverOnEvm = '0x1d1e18e1a484d0a10623661546ba97DEfAB7a7AE'.toLowerCase();
+const receiverOnEvm = '0x1d1e18e1a484d0a10623661546ba97DEfAB7a7AE'.slice(2).toLowerCase();
 const CROSS_TRANSFER_AMOUNT = 20;
 
 console.log(`inboundDemoScript address: ${contractsInfo.inboundDemoAddress}`);
@@ -323,8 +323,7 @@ function genBeneficiaryData(receiver: string, amount: string | bigint | number) 
             return false;
         }
     }
-
-    const to = isValidCardanoAddress(receiver) ? mConStr1([betch32AddressToMeshData(receiver)]) : mConStr0([Buffer.from(receiver, 'ascii').toString('hex')]);
+    const to = isValidCardanoAddress(receiver) ? mConStr1([betch32AddressToMeshData(receiver)]) : mConStr0([receiver]);
     return mConStr0([to, amount]);
 }
 function genMsgCrossData(to: string, amount: string | bigint | number, direction: TaskType) {
@@ -332,10 +331,10 @@ function genMsgCrossData(to: string, amount: string | bigint | number, direction
     const scriptHash = resolveScriptHash(script.code, script.version);
     const taskId = '';//direction == TaskType.INBOUND ? Buffer.alloc(32, Math.random().toString(16)).toString('hex') : '';
     const fromChainId = direction == TaskType.INBOUND ? defaultConfig.EvmChainId : defaultConfig.AdaChainId;
-    const fromAddress = direction == TaskType.OUTBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([Buffer.from(defaultConfig.EvmContractADDRESS, 'ascii').toString('hex')]);
+    const fromAddress = direction == TaskType.OUTBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([defaultConfig.EvmContractADDRESS]);
     const toChainId = direction == TaskType.INBOUND ? defaultConfig.AdaChainId : defaultConfig.EvmChainId;
 
-    const toAddress = direction == TaskType.INBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([Buffer.from(defaultConfig.EvmContractADDRESS, 'ascii').toString('hex')]);
+    const toAddress = direction == TaskType.INBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([defaultConfig.EvmContractADDRESS]);
     const gasLimit = 2000000;//should to be a config feild
 
     const tmpCallData = mConStr0(['wmbReceive', serializeData(genBeneficiaryData(to, amount))]);
@@ -365,7 +364,7 @@ function getMsgCrossDataFromCbor(hex: string) {
     const tmpCallData = datum.fields[6].fields[1].bytes;
 
     const functionCallData = {
-        functionName: datum.fields[6].fields[0].bytes,
+        functionName: Buffer.from(datum.fields[6].fields[0].bytes,'hex').toString('ascii'),
         functionArgs: getBeneficiaryFromCbor(tmpCallData)
     }
     return { msgId, fromChainId, fromContract, toChainId, targetContract, gasLimit, functionCallData };
