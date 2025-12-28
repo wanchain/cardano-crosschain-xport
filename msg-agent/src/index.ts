@@ -2,7 +2,7 @@
  * @Author: liulin blue-sky-dl5@163.com
  * @Date: 2025-12-02 11:12:29
  * @LastEditors: liulin blue-sky-dl5@163.com
- * @LastEditTime: 2025-12-23 17:06:40
+ * @LastEditTime: 2025-12-26 17:48:20
  * @FilePath: /msg-demo-project/msg-agent/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -21,7 +21,7 @@ dotenv.config({ path: path.join(__dirname, '../', '.env') });
 
 const receiverOnAda = 'addr_test1qpm0q3dmc0cq4ea75dum0dgpz4x5jsdf6jk0we04yktpuxnk7pzmhslsptnmagmek76sz92df9q6n49v7ajl2fvkrcdq9semsd';
 const receiverOnEvm = '0x1d1e18e1a484d0a10623661546ba97DEfAB7a7AE'.slice(2).toLowerCase();
-const CROSS_TRANSFER_AMOUNT = 20;
+const CROSS_TRANSFER_AMOUNT = 100;
 
 console.log(`inboundDemoScript address: ${contractsInfo.inboundDemoAddress}`);
 console.log(`inboundTokenScript policy: ${contractsInfo.inboundTokenPolicy}`);
@@ -37,9 +37,7 @@ console.log(`demoTokenScrip policy: ${contractsInfo.demoTokenPolicy}`);
 // console.log(`inboundDemoScript: ${inboundDemoScriptInfo.script.code}`);
 // if(!process.env.BLOCKFROST_API_KEY) throw 'BLOCKFROST_API_KEY is not set'
 const provider = new BlockfrostProvider(process.env.BLOCKFROST_API_KEY ? process.env.BLOCKFROST_API_KEY : '');
-const ogmiosUrl = 'https://ogmios1uxnqpx0u6erjzpcfdtk.cardano-preprod-v6.ogmios-m1.dmtr.host';
 
-const ogmios = new OgmiosProvider(ogmiosUrl);
 
 interface TransferInfo {
     receiver: string;
@@ -92,7 +90,7 @@ class Task implements TaskInfo {
         if (utxo.output.amount.find((item) => (item.unit.indexOf(contractsInfo.inboundTokenPolicy) == 0))) {
             this.taskType = TaskType.INBOUND;
             const msgCrossData = getMsgCrossDataFromCbor(utxo.output.plutusData);
-            this.id = msgCrossData.msgId;
+            this.id = Buffer.from(msgCrossData.msgId,'hex').toString('ascii');
             this.fromChainId = msgCrossData.fromChainId;
             this.fromContract = msgCrossData.fromContract;
             this.toChainId = msgCrossData.toChainId;
@@ -109,7 +107,7 @@ class Task implements TaskInfo {
             this.targetContract = defaultConfig.EvmContractADDRESS;
             this.gasLimit = 2000000n;
             this.functionCallData = {
-                functionName: 'wmbReceive',
+                functionName: 'wmbReceiveNonEvm',
                 functionArgs: { receiver: beneficiary.receiver, amount: beneficiary.amount }
             };
 
@@ -161,14 +159,17 @@ let outboundTaskPool: TaskPool = new TaskPool();
 let walletInbound: MeshWallet;
 let walletOutbound: MeshWallet;
 let walletUser: MeshWallet;
+let badTaskUtxos = new Map<string, number>;
 // class WalletPool
 async function fetchTask(provider: BlockfrostProvider, taskType: TaskType) {
     // await createInboundTask(receiverOnAda, CROSS_TRANSFER_AMOUNT);
     const taskContractAddress = taskType == TaskType.INBOUND ? contractsInfo.inboundDemoAddress : contractsInfo.outboundDemoAddress;
     let taskPool = taskType == TaskType.INBOUND ? inboundTaskPool : outboundTaskPool;
     const utxos = await provider.fetchAddressUTxOs(taskContractAddress);
+    
     utxos.map(utxo => {
-        // if (utxo.input.txHash != '8c181ac3a93e4beadb3fac33bc79e60c8986a43aafa29eead9f25aef5851b75a') return;
+        const key = (utxo.input.txHash+'#'+utxo.input.outputIndex).toLowerCase();
+        if (badTaskUtxos.has(key) && badTaskUtxos.get(key) >= 1) return;
         try {
             const task = new Task(utxo);
             if (taskPool.isExist(task.id)) {
@@ -179,7 +180,9 @@ async function fetchTask(provider: BlockfrostProvider, taskType: TaskType) {
 
             console.log(`add ${taskType} task : [${task.id}], current task pool size: ${taskPool.size()} receiver: ${task.functionCallData.functionArgs.receiver}, amount: ${task.functionCallData.functionArgs.amount}`);
         } catch (error) {
-            console.log(`${utxo.input.txHash}#${utxo.input.outputIndex} is not a valid ${taskType} task`);
+            const key = (utxo.input.txHash+'#'+utxo.input.outputIndex).toLowerCase();
+            badTaskUtxos.set(key, badTaskUtxos.has(key) ? badTaskUtxos.get(key) + 1 : 1);
+            console.log(`[${key}]${utxo.input.txHash}#${utxo.input.outputIndex} is not a valid ${taskType} task, failed ${badTaskUtxos.get(key)} times`);
             console.error(error);
         }
     });
@@ -264,7 +267,10 @@ async function doTask(taskType: TaskType) {
                 default: break;
             }
         } catch (error) {
-            console.error(`send Tx failed for do ${taskType} task ${task.id}`, error);
+            console.error(`send Tx failed for do ${taskType} task ${task.id}, utxo =${ task.utxo.input.txHash}#${task.utxo.input.outputIndex}`, error);
+
+            const key = (task.utxo.input.txHash+'#'+task.utxo.input.outputIndex).toLowerCase();
+            badTaskUtxos.set(key, badTaskUtxos.has(key) ? badTaskUtxos.get(key) + 1 : 1);
         }
 
 
@@ -337,7 +343,7 @@ function genMsgCrossData(to: string, amount: string | bigint | number, direction
     const toAddress = direction == TaskType.INBOUND ? mConStr1([mScriptAddress(scriptHash)]) : mConStr0([defaultConfig.EvmContractADDRESS]);
     const gasLimit = 2000000;//should to be a config feild
 
-    const tmpCallData = mConStr0(['wmbReceive', serializeData(genBeneficiaryData(to, amount))]);
+    const tmpCallData = mConStr0(['wmbReceiveNonEvm', serializeData(genBeneficiaryData(to, amount))]);//wmbReceive
     return mConStr0([taskId, fromChainId, fromAddress, toChainId, toAddress, gasLimit, tmpCallData]);
     // return mConStr0([receiver, amount]);
 }
