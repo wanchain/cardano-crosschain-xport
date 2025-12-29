@@ -21,15 +21,12 @@ The TokenHome is a smart contract for user in Wanchain to send token to Cardano 
 The smart contracts in this project are compiled and deployed using Hardhat. We have prepared the ABI files for the relevant contracts for you, and the related contracts have already been deployed on the Wanchain testnet. The corresponding information are as follows:
 
 2.1 Contract ABI
-TokenHome SC ABI: ./deployed/scAbi/ERC20TokenHome4CardanoV2.json
-Erc20 SC ABI: ./deployed/scAbi/XToken.json
+TokenHome SC ABI:   ./deployed/scAbi/ERC20TokenHome4CardanoV2.json
+Erc20 SC ABI:       ./deployed/scAbi/XToken.json
 
 2.2 Deployed Contracts Config
-1) Contracts in Wanchain Testnet
-./deployed/wanTestnet.json
-
-2) Contracts in Cardano Preprod
-./deployed/cardanoPreprod.json
+Contracts in Wanchain Testnet:  ./deployed/wanTestnet.json
+Contracts in Cardano Preprod:   ./deployed/cardanoPreprod.json
 
 
 3. Test Script
