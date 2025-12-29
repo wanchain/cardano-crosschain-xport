@@ -7,6 +7,9 @@ const Deployed_Cardano = require("../deployed/cardanoPreprod.json");
 const GXTokenSc = require("../deployed/scAbi/XToken.json");
 const TokenHomeSc = require("../deployed/scAbi/ERC20TokenHome4CardanoV2.json");
 
+const PlutusUtils = require("../utils/plutusDataTool.js");
+const plutusUtilObj = new PlutusUtils();
+
 const EVM_GXTOKEN_SCADDRESS = Deployed_WanChain.XToken; 
 const EVM_TOKENHOME_SCADDRESS = Deployed_WanChain.TokenHome; 
 const WAITTING_SECONDS = 30 * 1000;
@@ -57,7 +60,11 @@ describe("\n\n****Test ERC20TokenHome4Cardano", function () {
       console.log("to approve token for tokenHome sc..");
       await sleep(WAITTING_SECONDS);
 
-      const plutusDataMsg = "0xd8799fd87a9fd8799fd8799f581c76f045bbc3f00ae7bea379b7b501154d4941a9d4acf765f525961e1affd8799fd8799fd8799f581c76f045bbc3f00ae7bea379b7b501154d4941a9d4acf765f525961e1affffffffff192710ff";
+      let targetAddr = "addr_test1qpm0q3dmc0cq4ea75dum0dgpz4x5jsdf6jk0we04yktpuxnk7pzmhslsptnmagmek76sz92df9q6n49v7ajl2fvkrcdq9semsd";
+      let amount = 10000;
+      let plutusDataMsg = plutusUtilObj.genBeneficiaryData(targetAddr, amount)
+      console.log("\n\n..plutusDataMsg: ", plutusDataMsg);
+
       await tokenHome4CardanoScInst.send(
         plutusDataMsg
       );
