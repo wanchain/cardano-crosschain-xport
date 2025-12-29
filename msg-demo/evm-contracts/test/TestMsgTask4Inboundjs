@@ -1,0 +1,69 @@
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
+const { keccak256, arrayify, abi, solidityPack, defaultAbiCoder } = ethers.utils;
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
+
+
+const Config = require("../hardhat.config");
+const GXTokenSc = require("../artifacts/contracts/examples/XToken.sol/XToken.json");
+const TokenHomeSc = require("../artifacts/contracts/examples/TokenBridgeV2/ERC20TokenHome4CardanoV2.sol/ERC20TokenHome4CardanoV2.json");
+const GXTOKEN_SCADDRESS = "0x0B40EF8f0bA69C39f8dD7Eeab073275c72593aa2"; 
+const LOCAL_TOKENHOME_SCADDRESS = "0xd6Ed4F1F50Cae0c5c7F514F3D0B1220c4a78F71d"; 
+const PEER_INBOUND_TOKENREMOTE = "addr_test1wzqn7ncmdwgqeycelluzwnnnkewztryk6jw0n42srd37gwgqj5prq";
+const WAITTING_SECONDS = 30*1000;
+// 等待 N 秒
+function sleep(time) {
+	return new Promise(function (resolve, reject) {
+		setTimeout(function () {
+			resolve();
+		}, time);
+	})
+}
+
+describe("\n\n****Test ERC20TokenHome4Cardano", function () {
+  let tokenHome4CardanoSc, tokenHome4CardanoScInst, gxTokenSc, gxTokenScInst, nodeUrl, tokenHomeScAbi, gxTokenScAbi, rpcProvider, owner;
+
+
+  before(async () => {
+
+    [owner] = await ethers.getSigners();
+    console.log("owner:", owner.address);
+
+    nodeUrl = Config.networks.wanchainTestnet.url;
+    tokenHomeScAbi = TokenHomeSc.abi;
+    gxTokenScAbi = GXTokenSc.abi;
+    rpcProvider = new ethers.providers.JsonRpcProvider(this.nodeUrl);
+    // to create tokenHome sc instance
+    tokenHome4CardanoSc = new ethers.Contract(LOCAL_TOKENHOME_SCADDRESS, tokenHomeScAbi, rpcProvider);
+    tokenHome4CardanoScInst = tokenHome4CardanoSc.connect(owner);
+
+    // to create token sc instance
+    gxTokenSc = new ethers.Contract(GXTOKEN_SCADDRESS, gxTokenScAbi, rpcProvider);
+    gxTokenScInst = gxTokenSc.connect(owner);
+
+  });
+
+  
+  describe("\n\n===>To Cross Token from Cardano to Wan", function () {
+    it("To decode plutusData by wmbReceive api of TokenHome contract", async function () {
+
+      const bytesTokenRemoteAddress = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(PEER_INBOUND_TOKENREMOTE));
+      console.log('Convert PEER_TOKEN_ADDRESS to bytes : ', bytesTokenRemoteAddress);
+      // Get nonce and fee      
+      const plutusDataMsg = "0xd8799fd8799f541d1e18e1a484d0a10623661546ba97defab7a7aeff192710ff";
+      const messageId = "0x99c556fd22f491c8f7df47813e77d2d44fc1aafcaef2ef174e395d5800c29d30";
+      const fromChainId = "2147485463";
+
+      // Call receiveMessage
+      await tokenHome4CardanoScInst.wmbReceive(
+        plutusDataMsg,
+        messageId,
+        fromChainId,
+        bytesTokenRemoteAddress
+      );
+
+    });
+  });
+
+
+});
