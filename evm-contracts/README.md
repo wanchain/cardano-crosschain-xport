@@ -6,7 +6,7 @@ The protocol is implemented through the Wanchain Message Bridge smart contracts,
 
 # Contracts
 
-The contract code mainly consists of two parts: one part is WmbGateway, and the other part is WmbApp and WmbRetryableApp.
+The contract code for demo mainly consists of three part: XToken, WMB Gateway and TokenHome.
 
 1. XToken(./contracts/examples/XToken.sol)
 
