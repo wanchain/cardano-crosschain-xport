@@ -42,16 +42,23 @@ The smart contracts in this project are compiled and deployed using Hardhat. We 
 1. Deployed Contracts in Wanchain Testnet (./deployed/wanTestnet.json)
 
 {
+
   "XToken": "0x0B40EF8f0bA69C39f8dD7Eeab073275c72593aa2",
+  
   "WmbGateway": "0xDDddd58428706FEdD013b3A761c6E40723a7911d",
+  
   "TokenHome": "0xd6Ed4F1F50Cae0c5c7F514F3D0B1220c4a78F71d"
+  
 }
 
 2. Deployed Contracts in Cardano Preprod (./deployed/cardanoPreprod.json)
 
 {
+
   "PEER_TOKENREMOTE_INBOUND": "addr_test1wqzjepm5l3jepgqv42h292u56l5fcsuz8q6j6qtwyvldusq4qmy4n",
+  
   "PEER_TOKENREMOTE_OUTBOUND": "addr_test1wzu6ldpnxd7gdc0h5fyrt53utrk6ynudl6w304wc2sh7u9c3vl5le"
+  
 }
 
 # Test Script
