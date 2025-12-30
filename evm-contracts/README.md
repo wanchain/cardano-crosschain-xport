@@ -54,13 +54,11 @@ The smart contracts in this project are compiled and deployed using Hardhat. We 
 
 # Test Script
 
-In this project, you can cross GXToken from Wanchain to Cardano, You can modify the “targetAddr” and “amount” parameters in the test script, then run: 
+In this project, you can cross GXToken from Wanchain to Cardano, You can update the “targetAddr” and “amount” parameters in the test script, then run: 
 
 yarn hardhat --network wanchainTestnet test  test/TestMsgTask4Outbound.js
 
-## demo transactions
-
-1. From Wanchain To Cardano
+## Demo transactions (From Wanchain To Cardano)
 
 https://testnet.wanscan.org/tx/0x5120c402cf2b3e5065d5fa5f5b07a94c00b003c0df57c730c243419a12c65161?type=msg
 
@@ -68,7 +66,7 @@ https://testnet.wanscan.org/tx/0x7c1d28e7c30bf866caa010a25cd72843b6dd6daf8a315d6
 
 https://testnet.wanscan.org/tx/0x5f5f386b902ea4b157e8fd615b48e4c5b38e93a9833a1f7dfc506b795380941a?type=msg
 
-2. From Cardano To Wanchain
+## Demo transactions (From Cardano To Wanchain)
 
 https://testnet.wanscan.org/tx/d9faa3ee8779f61539a9dd4626212c8be5572fca2ced3d11432d4e8e63c61a79?type=msg
 
