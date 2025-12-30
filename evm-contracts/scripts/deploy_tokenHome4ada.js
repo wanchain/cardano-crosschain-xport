@@ -2,7 +2,7 @@
 const Deployed_Wanchain = require("../deployed/wanTestnet.json");
 
 const OWNER_ADDRESS = Deployed_Wanchain.TokenHomeOwnerAddr;
-const GATEWAY_ADDRESS = Deployed_Wanchain.wmbGateway;
+const GATEWAY_ADDRESS = Deployed_Wanchain.WmbGateway;
 const TOKEN_ADDRESS = Deployed_Wanchain.XToken; 
 
 async function main() {
