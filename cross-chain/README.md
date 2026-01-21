@@ -21,7 +21,7 @@
     Responsible to mint InboundToken which represent a inbound msg from other chain,the asset name is a unique parameter which prepresent the remote origin contract.
 
 * ### CheckToken
-    Responsible to mint CheckToken which represent a certain type of permission which is determined by the XXXCheck contract. ,such as InboundCheckToken <--> InboundMintCheck
+    Responsible to mint CheckToken which represent a certain type of permission which is determined by the XXXCheck contract, such as InboundCheckToken <--> InboundMintCheck
 
 * ### InboundMintCheck
     The contract holds the InboundCheckToken minted via CheckToken, is responsible for Mint operation of InboundToken is authorized. 
@@ -43,7 +43,7 @@
 ||Update GroupNFT Token|1. utxo with GroupNFT Token||1. utxo with GroupNFT Token|1. must spend utxo with AdminNFT when update any one of the parameters or signed by oracle-worker when update GPK.<br />2. update only one of the parameter at a time except when setting a new version(upgrading the GroupNFTHolder contract)<br />3. check the owner of GroupNFT is not changed except when setting a new version.|
 ||Mint AdminNFT Token|1.utxo which is specified by the contract parameters||1.utxo with AdminNFT Token (whose owner is usually the AdminNFTHolder)|1. must spend the utxo which is specified by GroupNFT‘s parameter( an another utxo is different with in Mint GrouNFT )|
 ||Spend AdminNFT Token|1. utxo with AdminNFT Token||1. utxo with AdminNFT Token|1. satisfies m/n multi-signatures<br />2. check AdminNFT in outputs:<br />       i) if action is Update ,check the new datum of the AdminNFT is valid. And the owner is AdminNFTHolder<br />      ii) if action is Use , check the datum of the AdminNFT is not changed.And the owner is AdminNFTHolder<br />      iii) if action is Upgrade ,the owner of AdminNFT must be a contract|
-||Mint XXXCheckToken|1.utxo with AdminNFT Token||1.utxo with AdminNFT <br />|1. must spend AdminNFT<br />2. check the owner of XXXCheckToken in outputs:<br />    i) TreasuryCheckToken is owner By TreasuryCheck<br />    ii) MintCheckToken is owner By MintCheck<br />    iii) NFTTreasuryCheckToken is owner By NFTTreasuryCheck<br />    iiii) NFTMintCheckToken is owner By NFTMintCheck<br />     iv) XPortMintCheckToken is owner By XPortMintCheck<br /> 3. check the amount of XXXCheckToken in each utxo is no bigger than 1|
+||Mint XXXCheckToken|1.utxo with AdminNFT Token||1.utxo with AdminNFT <br />|1. must spend AdminNFT<br />2. check the owner of XXXCheckToken in outputs:<br />    i) TreasuryCheckToken is owned By TreasuryCheck<br />    ii) MintCheckToken is owned By MintCheck<br />    iii) NFTTreasuryCheckToken is owned By NFTTreasuryCheck<br />    iiii) NFTMintCheckToken is owned By NFTMintCheck<br />     iv) InboundCheckToken is owned By InboundMintCheck<br /> 3. check the amount of XXXCheckToken in each utxo is no bigger than 1|
 ||Burn XXXCheckToken|1.utxo with AdminNFT Token||1.utxo with AdminNFT|1. must spend AdminNFT<br />2. check all XXXCheckToken has been burned|
 ||Operations about Stake|1.utxo with AdminNFT Token||1.utxo with AdminNFT<br />2. utxo owner by StackCheck if needed|1. must spend AdminNFT<br />2. check one of the outputs owner by StackCheck if redeemer is SpendU.|
 |||||||
