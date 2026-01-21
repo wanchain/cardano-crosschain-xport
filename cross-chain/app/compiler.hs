@@ -22,71 +22,71 @@ import CrossChain.GroupNFTHolder ( groupNFTHolderScript
   -- , GroupAdminNFTInfo (..)
   , ParamType (..)
   )
-import CrossChain.Treasury
-  ( treasuryScript
-  -- , treasuryScriptShortBs
-  , treasuryScriptHash
-  -- , treasuryScriptHashStr
-  , treasuryAddress
-  , CheckTokenInfo (..)
-  , CheckTokenInfo
-  ) 
+-- import CrossChain.Treasury
+--   ( treasuryScript
+--   -- , treasuryScriptShortBs
+--   , treasuryScriptHash
+--   -- , treasuryScriptHashStr
+--   , treasuryAddress
+--   , CheckTokenInfo (..)
+--   , CheckTokenInfo
+--   ) 
  
-import CrossChain.TreasuryCheck
-  ( treasuryCheckScript
-  -- , authorityCheckScriptShortBs
-  ,treasuryCheckScriptHash
-  -- ,authorityCheckScriptHashStr
-  ,treasuryCheckAddress
-  , TreasuryCheckParams (..)
-  , TreasuryCheckProof (..)
-  , TreasuryCheckRedeemer (..)
-  ) 
+-- import CrossChain.TreasuryCheck
+--   ( treasuryCheckScript
+--   -- , authorityCheckScriptShortBs
+--   ,treasuryCheckScriptHash
+--   -- ,authorityCheckScriptHashStr
+--   ,treasuryCheckAddress
+--   , TreasuryCheckParams (..)
+--   , TreasuryCheckProof (..)
+--   , TreasuryCheckRedeemer (..)
+--   ) 
 
-import CrossChain.NFTTreasuryCheck
-  (
-    nftTreasuryCheckScript
-  -- , authorityCheckScriptShortBs
-  ,nftTreasuryCheckScriptHash
-  -- ,authorityCheckScriptHashStr
-  ,nftTreasuryCheckAddress
-  , NFTTreasuryCheckProof (..)
-  , NFTTreasuryCheckProofData (..)
-  , NFTTreasuryCheckRedeemer(..)
-  ,NFTTreasuryCheckParams (..)
-  ,NFTTreasuryCheckParams
-  )
+-- import CrossChain.NFTTreasuryCheck
+--   (
+--     nftTreasuryCheckScript
+--   -- , authorityCheckScriptShortBs
+--   ,nftTreasuryCheckScriptHash
+--   -- ,authorityCheckScriptHashStr
+--   ,nftTreasuryCheckAddress
+--   , NFTTreasuryCheckProof (..)
+--   , NFTTreasuryCheckProofData (..)
+--   , NFTTreasuryCheckRedeemer(..)
+--   ,NFTTreasuryCheckParams (..)
+--   ,NFTTreasuryCheckParams
+--   )
 
-import CrossChain.NFTTreasury
-  ( nftTreasuryScript
-  -- , treasuryScriptShortBs
-  ,nftTreasuryScriptHash
-  -- ,treasuryScriptHashStr
-  ,nftTreasuryAddress
-  -- , TreasuryCheckProof (..)
-  -- ,TreasuryCheckProof
-  -- ,NFTTreasuryParams (..)
-  -- ,NFTTreasuryParams
-  )  
+-- import CrossChain.NFTTreasury
+--   ( nftTreasuryScript
+--   -- , treasuryScriptShortBs
+--   ,nftTreasuryScriptHash
+--   -- ,treasuryScriptHashStr
+--   ,nftTreasuryAddress
+--   -- , TreasuryCheckProof (..)
+--   -- ,TreasuryCheckProof
+--   -- ,NFTTreasuryParams (..)
+--   -- ,NFTTreasuryParams
+--   )  
 
-import CrossChain.NFTMappingToken
-  ( nftMappingTokenScript
-  , nftMappingTokenScriptShortBs
-  , nftMappingTokenCurSymbol
-  , NFTMappingParams (..)
-  )
+-- import CrossChain.NFTMappingToken
+--   ( nftMappingTokenScript
+--   , nftMappingTokenScriptShortBs
+--   , nftMappingTokenCurSymbol
+--   , NFTMappingParams (..)
+--   )
 
-import CrossChain.NFTMintCheck
-  ( mintNFTCheckScript
-  -- , authorityCheckScriptShortBs
-  ,mintNFTCheckScriptHash
-  -- ,authorityCheckScriptHashStr
-  ,mintNFTCheckAddress
-  , NFTMintCheckProof (..)
-  , NFTMintCheckRedeemer (..)
-  -- , GroupAdminNFTCheckTokenInfo (..)
-  -- , GroupAdminNFTCheckTokenInfo
-  )
+-- import CrossChain.NFTMintCheck
+--   ( mintNFTCheckScript
+--   -- , authorityCheckScriptShortBs
+--   ,mintNFTCheckScriptHash
+--   -- ,authorityCheckScriptHashStr
+--   ,mintNFTCheckAddress
+--   , NFTMintCheckProof (..)
+--   , NFTMintCheckRedeemer (..)
+--   -- , GroupAdminNFTCheckTokenInfo (..)
+--   -- , GroupAdminNFTCheckTokenInfo
+--   )
 
 import CrossChain.InboundMintCheck
   ( inboundMintCheckScript
@@ -129,20 +129,20 @@ import Cardano.Crypto.DSIGN.Class (
   rawSerialiseSignKeyDSIGN,
   signDSIGN,
  )
-import CrossChain.MappingToken
-  ( mappingTokenScript
-  , mappingTokenScriptShortBs
-  , mappingTokenCurSymbol
-  -- , MappingTokenParams (..)
-  )
+-- import CrossChain.MappingToken
+--   ( mappingTokenScript
+--   , mappingTokenScriptShortBs
+--   , mappingTokenCurSymbol
+--   -- , MappingTokenParams (..)
+--   )
   
-import CrossChain.MintCheck
-  ( mintCheckScript
-  ,mintCheckScriptHash
-  ,mintCheckAddress
-  , MintCheckRedeemer (..)
-  -- , MintCheckParams (..)
-  )
+-- import CrossChain.MintCheck
+--   ( mintCheckScript
+--   ,mintCheckScriptHash
+--   ,mintCheckAddress
+--   , MintCheckRedeemer (..)
+--   -- , MintCheckParams (..)
+--   )
 
 import CrossChain.CheckToken
   ( checkTokenScript
@@ -181,20 +181,20 @@ import CrossChain.StakeCheck
 --   , nftMappingTokenCurSymbol
 --   )
 
-import CrossChain.NFTMintCheck
-  ( mintNFTCheckScript
-  ,mintNFTCheckScriptHash
-  ,mintNFTCheckAddress
-  , NFTMintCheckProofData (..)
-  , NFTMintCheckProof (..)
-  , NFTMintCheckRedeemer (..)
-  )
+-- import CrossChain.NFTMintCheck
+--   ( mintNFTCheckScript
+--   ,mintNFTCheckScriptHash
+--   ,mintNFTCheckAddress
+--   , NFTMintCheckProofData (..)
+--   , NFTMintCheckProof (..)
+--   , NFTMintCheckRedeemer (..)
+--   )
 
-import CrossChain.NFTRefHolder
-  ( nftRefHolderScript
-  ,nftRefHolderScriptHash
-  ,nftRefHolderAddress
-  )
+-- import CrossChain.NFTRefHolder
+--   ( nftRefHolderScript
+--   ,nftRefHolderScriptHash
+--   ,nftRefHolderAddress
+--   )
 
 -- import CrossChain.TokenHolder
 --   ( tokenHolderScript
@@ -405,14 +405,14 @@ main = do
       groupTokenInfo = GroupInfoParams [(unCurrencySymbol  groupNftSymbol),(unTokenName groupNftName)]
 
       -- storeman = TreasuryCheckParams (GroupAdminNFTCheckTokenInfo groupNft adminNft treasuryCheckToken) (treasuryScriptHash treasuryCheckToken) 
-      storeman = TreasuryCheckParams (GroupAdminNFTCheckTokenInfo groupNft adminNft treasuryCheckToken) oldTreasuryVH
+      -- storeman = TreasuryCheckParams (GroupAdminNFTCheckTokenInfo groupNft adminNft treasuryCheckToken) oldTreasuryVH
 
 
       mintCheckParam = GroupAdminNFTCheckTokenInfo groupNft adminNft mintCheckToken
 
 ------------------------   nft  --------------------------
-      nftCheckParam = NFTTreasuryCheckParams (GroupAdminNFTCheckTokenInfo groupNft adminNft nftTreasuryCheckToken) (nftTreasuryScriptHash nftTreasuryCheckToken) 
-      nftMintCheckParam = GroupAdminNFTCheckTokenInfo groupNft adminNft nftMintCheckToken
+      -- nftCheckParam = NFTTreasuryCheckParams (GroupAdminNFTCheckTokenInfo groupNft adminNft nftTreasuryCheckToken) (nftTreasuryScriptHash nftTreasuryCheckToken) 
+      -- nftMintCheckParam = GroupAdminNFTCheckTokenInfo groupNft adminNft nftMintCheckToken
 -------------------------- msg cross-chain  -------------------------------- 
       -- inboundTokenName = TokenName (Builtins.encodeUtf8 "InboundTokenCoin")
       inboundTokenSymbol = inboundTokenCurSymbol inboundMintCheckToken
@@ -540,8 +540,8 @@ main = do
   putStrLn $ "redeemerHash: " ++ (Char8.unpack (Base16.encode $ Builtins.fromBuiltin hashRedeemer))
 
 
-  putStrLn $ "address: " ++ (Char8.unpack (Base16.encode $ Builtins.fromBuiltin (Builtins.serialiseData . toBuiltinData $  treasuryCheckAddress storeman)))
-  putStrLn $ "TreasuryCheck VH:" ++ (Char8.unpack (Base16.encode $ Builtins.fromBuiltin (Builtins.serialiseData . toBuiltinData $  treasuryCheckScriptHash storeman)))
+  -- putStrLn $ "address: " ++ (Char8.unpack (Base16.encode $ Builtins.fromBuiltin (Builtins.serialiseData . toBuiltinData $  treasuryCheckAddress storeman)))
+  -- putStrLn $ "TreasuryCheck VH:" ++ (Char8.unpack (Base16.encode $ Builtins.fromBuiltin (Builtins.serialiseData . toBuiltinData $  treasuryCheckScriptHash storeman)))
 
   -- _ <- writeRedeemer (datadir </>"./utxoRef.json") (PlutusTx.toBuiltinData utxoRef)
 
