@@ -55,22 +55,9 @@ library
   exposed-modules:
     CrossChain.GroupNFT
     CrossChain.GroupNFTHolder
-    CrossChain.Treasury
     CrossChain.Types
-    CrossChain.TreasuryCheck
-    CrossChain.MintCheck
-    CrossChain.MappingToken
     CrossChain.CheckToken
     CrossChain.AdminNFTHolder
-    CrossChain.StoremanStake
-    CrossChain.StakeCheck
-    CrossChain.NFTTreasuryCheck
-    CrossChain.NFTTreasury
-    CrossChain.NFTMintCheck
-    CrossChain.NFTMappingToken
-    CrossChain.NFTRefHolder
-    CrossChain.Types2
-    CrossChain.TokenHolder
     CrossChain.InboundMintCheck
     CrossChain.OutboundToken
     CrossChain.XPort
