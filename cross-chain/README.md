@@ -1,13 +1,18 @@
 # Contracts Description
-* #### GroupNFT
-     Responsible to mint a NFT Token such as GroupNFTToken and AdminNFTToken. 
+* ### GroupNFT (Common for Asset/XPort Crosschain)
+     Responsible to mint a NFT Token such as GroupNFTToken and AdminNFTToken.
+  
 * #### GroupNFTToken
-    GroupNFTToken stores important parameters for crosschain ,such as GPK, in inline datum
+    GroupNFTToken stores important parameters for crosschain, such as GPK, in inline datum
+  
 * #### AdminNFTToken
-    AdminNFTToken stores Administator parameters ,such as all Administators's PK of and the Authorization thresholds, in inline datum
+    AdminNFTToken stores Administator parameters, such as all Administators's PK of and the Authorization thresholds, in inline datum
 
-* ### GroupNFTHolder
+* ### GroupNFTHolder (Common for Asset/XPort Crosschain)
     The contract holds the GroupNFT.
+
+* ### AdminNFTHolder (Common for Asset/XPort Crosschain)
+    The contract holds the AdminNFTToken minted via GroupNFT. Any management operations must be authorized by the AdminNFTHolder.
 
 * ### InboundToken
     Responsible to mint InboundToken which represent a inbound msg from other chain,the asset name is a unique parameter which prepresent the remote origin contract.
