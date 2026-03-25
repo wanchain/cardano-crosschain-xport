@@ -12,25 +12,15 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ViewPatterns         #-}
--- {-# LANGUAGE FlexibleContexts   #-}
--- {-# LANGUAGE NamedFieldPuns     #-}
--- {-# LANGUAGE OverloadedStrings  #-}
--- {-# LANGUAGE TypeOperators      #-}
--- {-# OPTIONS_GHC -fno-ignore-interface-pragmas #-}
--- {-# OPTIONS_GHC -fno-specialise #-}
 {-# OPTIONS_GHC -fplugin-opt PlutusTx.Plugin:profile-all #-}
 {-# OPTIONS_GHC -fplugin-opt PlutusTx.Plugin:dump-uplc #-}
 
 module CrossChain.InboundMintCheck
   ( inboundMintCheckScript
-  -- , authorityCheckScriptShortBs
   ,inboundMintCheckScriptHash
-  -- ,authorityCheckScriptHashStr
   ,inboundMintCheckAddress
   , InboundProof (..)
   , InboundCheckRedeemer (..)
-  -- , InboundMintCheckInfo (..)
-  -- , InboundMintCheckInfo
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -42,46 +32,32 @@ import Codec.Serialise
 import Data.ByteString.Lazy qualified as LBS
 import Data.ByteString.Short qualified as SBS
 
--- import Plutus.Script.Utils.V2.Typed.Scripts.Validators as Scripts
 import Plutus.Script.Utils.V2.Typed.Scripts qualified as PV2
 import Plutus.Script.Utils.V2.Scripts as Scripts
 import Plutus.V2.Ledger.Api qualified as Plutus
 import Plutus.V2.Ledger.Contexts as V2
 import PlutusTx qualified
--- import PlutusTx.Builtins
 import PlutusTx.Builtins
--- import PlutusTx.Eq as PlutusTx
--- import PlutusTx.Eq()
 import PlutusTx.Prelude  hiding (SemigroupInfo (..), unless, (.))
--- import PlutusTx.Prelude qualified as PlutusPrelude
 import           Ledger               hiding (validatorHash,validatorHash)
 import Plutus.V2.Ledger.Tx (isPayToScriptOut,OutputDatum (..))
-import Ledger.Typed.Scripts (ValidatorTypes (..), TypedValidator (..),mkTypedValidator,mkTypedValidatorParam) --,mkUntypedValidator )
--- import Plutus.Script.Utils.Typed (validatorScript,validatorAddress,validatorHash)
+import Ledger.Typed.Scripts (ValidatorTypes (..), TypedValidator (..),mkTypedValidator,mkTypedValidatorParam)
 
 import Data.ByteString qualified as ByteString
 import Ledger.Crypto (PubKey (..), PubKeyHash, pubKeyHash)
 import Plutus.V1.Ledger.Bytes (LedgerBytes (LedgerBytes),fromBytes,getLedgerBytes)
 import Ledger.Ada  as Ada
 import Plutus.V1.Ledger.Value (valueOf,currencySymbol,tokenName,symbols,flattenValue,assetClass)
--- import Plutus.V1.Ledger.Interval (Extended (..))
 import PlutusTx.Builtins --(decodeUtf8,sha3_256,appendByteString)
 import Ledger.Address 
 import Ledger.Value
 import Plutus.V2.Ledger.Contexts as V2
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import Plutus.V1.Ledger.Tx
--- import CrossChain.Types2 
-import CrossChain.Types -- (GroupNFTTokenInfo (..), InboundMintCheckInfo (..), GroupAdminNFTCheckTokenInfo (..),CrossMsgData (..), ParamType (..),GroupInfoParams (..),NonsenseDatum (..), AdminNftTokenInfo (..), CheckTokenInfo (..), scriptOutputsAt2, MsgAddress (..), getGroupInfo, getGroupInfoParams)
+import CrossChain.Types
 import Plutus.Script.Utils.V2.Address (mkValidatorAddress)
--- ===================================================
--- import Plutus.V1.Ledger.Value
--- import Ledger.Address (PaymentPrivateKey (PaymentPrivateKey, unPaymentPrivateKey), PaymentPubKey (PaymentPubKey),PaymentPubKeyHash (..),unPaymentPubKeyHash,toPubKeyHash,toValidatorHash)
 
-import Ledger hiding (validatorHash) --singleton
-
-
-
+import Ledger hiding (validatorHash)
 
 
 data InboundProofData = InboundProofData
@@ -203,9 +179,6 @@ mintSpendCheck (InboundMintCheckInfo (GroupAdminNFTCheckTokenInfo (GroupNFTToken
     !checkOutput = 
       case scriptOutputsAt2 msgConsumer info expectedDatum of
         [v] -> (isSingleAsset v mintPolicy (TokenName targetVH))
-  --         -- case Plutus.getDatum d of 
-  --         -- case Plutus.fromBuiltinData @CrossMsgData $ Plutus.getDatum d of 
-  --         --   Just ibd' -> True -- (crossMsgData == ibd') && (isSingleAsset v mintPolicy mintTokenName)
 
     mintValue :: Integer
     mintValue = valueOf (V2.txInfoMint info) mintPolicy (TokenName targetVH)
@@ -220,9 +193,6 @@ mkValidator storeman _ redeemer ctx =
   case redeemer of
     BurnInboundCheckToken -> burnTokenCheck storeman ctx
     InboundCheckRedeemer mintCheckProof -> mintSpendCheck storeman mintCheckProof ctx
-  -- where
-  --   ctx = PlutusTx.unsafeFromBuiltinData @V2.ScriptContext rawContext
-
 
 validator :: InboundMintCheckInfo -> Scripts.Validator
 validator p = Plutus.mkValidatorScript $

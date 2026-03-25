@@ -43,19 +43,9 @@ import Data.Aeson (FromJSON, ToJSON)
 import PlutusTx (BuiltinData, CompiledCode, Lift, applyCode, liftCode, fromData)
 import GHC.Generics (Generic)
 import Plutus.Script.Utils.Typed (validatorScript,validatorAddress,validatorHash)
--- import Plutus.V1.Ledger.Scripts (unValidatorScript)
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import CrossChain.Types(CrossMsgData (..), GroupNFTTokenInfo (..), ParamType (..), GroupInfoParams (..), OutboundTokenParams (..),isSingleAsset, getGroupInfo, getGroupInfoParams, MsgAddress (..))
 
-
-
-
-
-
--- data InboundCheckType
--- instance Scripts.ValidatorTypes InboundCheckType where
---     type instance DatumType InboundCheckType = ()
---     type instance RedeemerType InboundCheckType = ()
 
 {-# INLINABLE groupInfoFromUtxo #-}
 groupInfoFromUtxo :: V2.TxOut -> GroupInfoParams
@@ -94,7 +84,6 @@ mkPolicy  (OutboundTokenParams (GroupNFTTokenInfo groupNftSymbol groupNftName) t
 
     mintValue :: Integer
     mintValue = valueOf (V2.txInfoMint info) (ownCurrencySymbol ctx) tokenName
-        -- [(symbol,_,a)] -> (symbol == ownCurrencySymbol ctx) && (a < 0)
 
 policy :: OutboundTokenParams -> V2.MintingPolicy
 policy oref = V2.mkMintingPolicyScript $ $$(PlutusTx.compile [|| \c -> V2.mkUntypedMintingPolicy (mkPolicy c)  ||]) 

@@ -13,52 +13,29 @@ module CrossChain.AdminNFTHolder
   ( adminNFTHolderScript
   , adminNFTHolderScriptHash
   , adminNFTHolderAddress
-  -- , AdminDatum (..)
   , AdminActionRedeemer (..)
   ) where
 
 import Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV2)
 import Prelude hiding (($), (&&),(==),(/=),(||),(-),(++),(!!),(>),(>=),(+),(/=),snd,sum ,map,elem,length,filter)
--- import GHC.Generics (Generic)
 import Codec.Serialise
 import Data.ByteString.Lazy qualified as LBS
 import Data.ByteString.Short qualified as SBS
 import Plutus.V1.Ledger.Value
--- import Plutus.Script.Utils.V2.Scripts as Scripts
 import Ledger.Address (PaymentPrivateKey (PaymentPrivateKey, unPaymentPrivateKey), PaymentPubKey (PaymentPubKey),PaymentPubKeyHash (..),unPaymentPubKeyHash,toPubKeyHash,toValidatorHash)
 import Plutus.V2.Ledger.Api qualified as Plutus
 import Plutus.V2.Ledger.Contexts as V2
 import Plutus.Script.Utils.V2.Typed.Scripts qualified as PV2
 
 import PlutusTx qualified
--- import PlutusTx.Builtins
 import PlutusTx.Builtins
--- import PlutusTx.Eq as PlutusTx
--- import PlutusTx.Eq()
 import PlutusTx.Prelude hiding (SemigroupInfo (..), unless, (.))
--- import PlutusTx.Prelude qualified as PlutusPrelude
 import           Ledger               hiding (singleton,validatorHash)
--- import Ledger.Typed.Scripts qualified as Scripts
 import Plutus.V1.Ledger.Scripts (getDatum)
--- import Plutus.Script.Utils.Typed (validatorScript,validatorAddress,validatorHash)
 import Plutus.V1.Ledger.Scripts (unValidatorScript)
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import CrossChain.Types
 
-
-
-
-
-        -- deriving anyclass (ToJSON, FromJSON)
-
--- instance PlutusTx.Prelude.Eq AdminDatum where
---     {-# INLINABLE (==) #-}
---     AdminDatum signatories minNumSignatures == AdminDatum signatories' minNumSignatures' =
---         signatories == signatories'
---         && minNumSignatures == minNumSignatures'
-
--- PlutusTx.unstableMakeIsData ''AdminDatum
--- PlutusTx.makeLift ''AdminDatum
 
 data AdminActionRedeemer = Use | Update | Upgrade
     deriving (Show, Prelude.Eq)
@@ -98,7 +75,6 @@ mkValidator (AdminNftTokenInfo adminNFTSymbol adminNFTName) _ action ctx =
     adminNFTOutput :: V2.TxOut
     adminNFTOutput =
         let 
-          -- holder = V2.ownHash ctx
           output = filter isTarget $ V2.txInfoOutputs info
         in  
             case output of
@@ -164,11 +140,6 @@ mkValidator (AdminNftTokenInfo adminNFTSymbol adminNFTName) _ action ctx =
             _ -> False
           (Address (Plutus.PubKeyCredential k) _) -> True
 
-
-    
-      
-
-
 typedValidator :: AdminNftTokenInfo -> PV2.TypedValidator Holding
 typedValidator = PV2.mkTypedValidatorParam @Holding
     $$(PlutusTx.compile [|| mkValidator ||])
@@ -186,7 +157,6 @@ adminNFTHolderScriptShortBs :: AdminNftTokenInfo -> SBS.ShortByteString
 adminNFTHolderScriptShortBs c = SBS.toShort . LBS.toStrict $ serialise  (script c)
 
 adminNFTHolderScript :: AdminNftTokenInfo ->  PlutusScript PlutusScriptV2
--- adminNFTHolderScript = PlutusScriptSerialised . groupInfoTokenHolderScriptShortBs
 adminNFTHolderScript c = PlutusScriptSerialised
   . SBS.toShort
   . LBS.toStrict

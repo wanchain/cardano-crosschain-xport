@@ -36,21 +36,15 @@ import PlutusTx qualified
 import PlutusTx.Builtins
 import PlutusTx.Prelude hiding (SemigroupInfo (..), unless, (.))
 
--- import Ledger.Address (PaymentPrivateKey (PaymentPrivateKey, unPaymentPrivateKey), PaymentPubKey (PaymentPubKey),PaymentPubKeyHash (..),unPaymentPubKeyHash,toPubKeyHash,toValidatorHash)
 import Plutus.V1.Ledger.Value
--- import Plutus.V1.Ledger.Bytes (LedgerBytes (LedgerBytes))
 import Ledger.Crypto (PubKey (..), PubKeyHash (..))
 import Data.Aeson (FromJSON, ToJSON)
 import PlutusTx (BuiltinData, CompiledCode, Lift, applyCode, liftCode, fromData)
 import GHC.Generics (Generic)
 import Plutus.Script.Utils.Typed (validatorScript,validatorAddress,validatorHash)
--- import Plutus.V1.Ledger.Scripts (unValidatorScript)
 import Plutus.V1.Ledger.Value (valueOf,flattenValue,assetClass)
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import CrossChain.Types 
--- import Plutus.V2.Ledger.Tx (isPayToScriptOut)
-
--- import PlutusTx.Builtins (decodeUtf8,sha3_256,appendByteString)
 
 data CheckTokenParam
   = CheckTokenParam
@@ -59,7 +53,6 @@ data CheckTokenParam
         , checkTokenName :: TokenName
         , groupInfoIndex :: ParamType
       } deriving stock (Generic)
-        -- deriving anyclass (ToJSON, FromJSON)
 
 PlutusTx.unstableMakeIsData ''CheckTokenParam
 PlutusTx.makeLift ''CheckTokenParam
@@ -70,8 +63,6 @@ mkPolicy :: CheckTokenParam -> () -> ScriptContext -> Bool
 mkPolicy (CheckTokenParam (GroupNFTTokenInfo groupInfoNFTCurrency groupInfoNFTName) (AdminNftTokenInfo adminNftSymbol adminNftName) checkTokenName groupInfoIndex) () ctx = 
   traceIfFalse "wa" checkMint
   && traceIfFalse "s" hasAdminNftInInput
-  -- && traceIfFalse "eo" checkOutput
-  -- && traceIfFalse "m" checkOutputCount
   where
     info :: TxInfo
     info = scriptContextTxInfo ctx
@@ -102,8 +93,7 @@ mkPolicy (CheckTokenParam (GroupNFTTokenInfo groupInfoNFTCurrency groupInfoNFTNa
 
     mintInfo :: (CurrencySymbol, TokenName, Integer)
     mintInfo = case flattenValue (txInfoMint info) of
-        [(symbols, name, amt)] -> (symbols, name, amt) -- symbols == (ownCurrencySymbol ctx) && name == checkTokenName && (amt == 1 || amt == (-1))
-        -- _               -> False
+        [(symbols, name, amt)] -> (symbols, name, amt)
     checkMint :: Bool
     checkMint = 
       let (symbols,name,amt) = mintInfo

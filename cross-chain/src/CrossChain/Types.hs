@@ -25,38 +25,23 @@ module CrossChain.Types where
 
 import Prelude hiding((&&),(==),($),(!!),(<),(>),(/=),(||),negate,length,filter,map,fst,snd,mconcat,all,not)
 import GHC.Generics (Generic)
--- import Builtins qualified as Builtins
 import Data.ByteString qualified as ByteString
 import Plutus.V1.Ledger.Bytes (LedgerBytes (LedgerBytes),fromBytes,getLedgerBytes)
--- import Plutus.V1.Ledger.Value (TokenName (..), CurrencySymbol)
 import Plutus.V2.Ledger.Api (TokenName (..), CurrencySymbol,TxOutRef, Value, DatumHash, TxId (..)
     , TxOut(..)
-    -- , TxInfo
-    -- , ScriptPurpose
     , TxInInfo
     , TxOutRef(..)
     , OutputDatum (..),Datum (..),Address(..),ScriptHash (..)
     ,fromBuiltinData,getDatum,ValidatorHash (..),Credential (..)
     , StakingCredential (..), PubKeyHash (..),
     )
--- import Plutus.V2.Ledger.Tx as V2
-import PlutusTx --(CompiledCode, Lift, UnsafeFromData (unsafeFromBuiltinData), applyCode, liftCode,BuiltinData,makeLift,makeIsDataIndexed)
+import PlutusTx
 import PlutusTx.Prelude 
--- import Prelude (check)
 import Plutus.Script.Utils.Typed (UntypedValidator)
 import Plutus.V2.Ledger.Contexts as V2
-import Plutus.V1.Ledger.Value (valueOf,flattenValue,assetClass,assetClassValueOf) -- ,currencySymbol,tokenName,symbols
+import Plutus.V1.Ledger.Value
 import Ledger.Ada  as Ada
 import PlutusTx.Builtins
--- {-# INLINABLE groupInfoNFTCurrency #-}
--- groupInfoNFTCurrency :: CurrencySymbol
--- groupInfoNFTCurrency = groupNFTSymbol nftNonce
-
--- {-# INLINABLE groupInfoNFTName #-}
--- groupInfoNFTName :: TokenName
--- groupInfoNFTName = TokenName (encodeUtf8 "GroupInfoTokenCoin")
-
-
 
 
 {-# INLINABLE mkUntypedValidator' #-}
@@ -105,10 +90,6 @@ data TxInfo' = TxInfo'
 data StoremanScriptContext = StoremanScriptContext {scriptContextTxInfo' :: TxInfo', scriptContextPurpose :: BuiltinData}
   deriving (Generic, Prelude.Eq)
 
--- instance Eq StoremanScriptContext where
---     {-# INLINABLE (==) #-}
---     StoremanScriptContext info purpose == StoremanScriptContext info' purpose' = info == info' && purpose == purpose'
-
 data ParamType = Version | Admin | GPK | BalanceWorker | TreasuryCheckVH | OracleWorker | MintCheckVH  | StkVh | StakeCheckVH | NFTRefHolderVH | NFTTreasuryCheckVH | NFTMintCheckVH | OutboundHolderVH | InboundCheckVH
 data GroupInfoParams
   = GroupInfoParams
@@ -129,18 +110,14 @@ data NonsenseDatum
 data CheckTokenInfo
   = CheckTokenInfo
       { 
-        -- groupInfoNFTCurrency :: CurrencySymbol
-        -- , groupInfoNFTName :: TokenName
         checkTokenSymbol :: CurrencySymbol
         , checkTokenName :: TokenName
       } deriving (Generic, Prelude.Eq)
-        -- deriving anyclass (ToJSON, FromJSON)
 
 data GroupNFTTokenInfo
   = GroupNFTTokenInfo
       { groupNftSymbol       :: CurrencySymbol
         , groupNftName :: TokenName
-        -- , groupInfoTokenHolder :: V2.ValidatorHash
       } deriving  (Generic, Prelude.Eq)
 
 data AdminNftTokenInfo
@@ -154,7 +131,6 @@ data GroupAdminNFTInfo
       { group :: GroupNFTTokenInfo
         , admin :: AdminNftTokenInfo
       } deriving  (Generic, Prelude.Eq)
-        -- deriving anyclass (ToJSON, FromJSON)
 
 data GroupAdminNFTCheckTokenInfo
   = GroupAdminNFTCheckTokenInfo
@@ -179,32 +155,19 @@ data CrossDatum = CrossDatum
     , outTokenName :: BuiltinByteString
     , outTokenMode :: Bool -- True: EVM MappingToken False: Cardano native token
     , constraintCBOR :: BuiltinByteString
-    -- inTokenAmount ::Integer
-    -- outTokenAmountMin :: Integer
   }
 data InboundMintCheckInfo = InboundMintCheckInfo
   { gact :: GroupAdminNFTCheckTokenInfo
     , mintPolicy :: CurrencySymbol
-    -- , mintTokenName :: TokenName
   } deriving  (Generic, Prelude.Eq)
 
 data MsgAddress = ForeignAddress BuiltinByteString | LocalAddress Address deriving (Show, Prelude.Eq)
-
--- instance PlutusTx.Prelude.Eq MsgAddress where
---     {-# INLINABLE (==) #-}
---     (ForeignAddress a1) == (ForeignAddress a2) = (a1 == a2)
---     (LocalAddress a1) == (LocalAddress a2) = (a1 == a2)
---     _ == _ = False
 
 data FunctionCallData = FunctionCallData
   {
     functionName :: BuiltinByteString
     , functionArgs :: BuiltinByteString
   }deriving (Show, Prelude.Eq)
-
--- instance PlutusTx.Prelude.Eq FunctionCallData where
---     {-# INLINABLE (==) #-}
---     (FunctionCallData a1 b1 ) == (FunctionCallData a2 b2) = (a1 == a2) && (b1 == b2)
 
 data CrossMsgData = CrossMsgData
   {
@@ -223,23 +186,14 @@ PlutusTx.makeLift ''FunctionCallData
 PlutusTx.makeIsDataIndexed ''MsgAddress [('ForeignAddress, 0), ('LocalAddress, 1)]
 PlutusTx.makeLift ''MsgAddress
 
--- PlutusTx.unstableMakeIsData ''CrossMsgData
 PlutusTx.makeIsDataIndexed ''CrossMsgData [('CrossMsgData, 0)]
 PlutusTx.makeLift ''CrossMsgData
-
--- 为InboundData实现PlutusTx.Eq实例
--- instance PlutusTx.Prelude.Eq CrossMsgData where
---     {-# INLINABLE (==) #-}
---     (CrossMsgData a1 b1 c1 d1 e1 f1) == (CrossMsgData a2 b2 c2 d2 e2 f2) = (a1 == a2) && (b1 == b2) && (c1 == c2) && (d1 == d2) && (e1 == e2) && (f1 == f2)
-
 
 data OutboundTokenParams = OutboundTokenParams
       { gropNft :: GroupNFTTokenInfo
         , tokenName :: TokenName 
       } deriving (Generic, Prelude.Eq)
-        -- deriving anyclass (ToJSON, FromJSON)
 
--- PlutusTx.unstableMakeIsData ''OutboundTokenParams
 PlutusTx.makeIsDataIndexed ''OutboundTokenParams [('OutboundTokenParams, 0)]
 PlutusTx.makeLift ''OutboundTokenParams
 
@@ -256,11 +210,9 @@ PlutusTx.makeIsDataIndexed ''GroupAdminNFTCheckTokenInfo [('GroupAdminNFTCheckTo
 PlutusTx.makeLift ''AdminNftTokenInfo
 PlutusTx.makeIsDataIndexed ''AdminNftTokenInfo [('AdminNftTokenInfo, 0)]
 
--- PlutusTx.unstableMakeIsData ''GroupAdminNFTInfo
 PlutusTx.makeLift ''GroupAdminNFTInfo
 PlutusTx.makeIsDataIndexed ''GroupAdminNFTInfo [('GroupAdminNFTInfo, 0)]
 
--- PlutusTx.unstableMakeIsData ''GroupNFTTokenInfo
 PlutusTx.makeLift ''GroupNFTTokenInfo
 PlutusTx.makeIsDataIndexed ''GroupNFTTokenInfo [('GroupNFTTokenInfo, 0)]
 
@@ -290,23 +242,6 @@ PlutusTx.makeIsDataIndexed ''AdminDatum [('AdminDatum, 0)]
 
 PlutusTx.makeLift ''NonsenseDatum
 PlutusTx.makeIsDataIndexed  ''NonsenseDatum [('NonsenseDatum, 0)]
-
--- PlutusTx.makeLift ''TreasuryCheckProof
--- PlutusTx.makeIsDataIndexed ''TreasuryCheckProof [('TreasuryCheckProof, 0)]
-
--- PlutusTx.makeLift ''MintCheckRedeemer
--- PlutusTx.makeIsDataIndexed ''MintCheckRedeemer [('MintCheckRedeemer, 0)]
-
--- PlutusTx.makeLift ''CheckRedeemer
--- PlutusTx.makeIsDataIndexed ''CheckRedeemer [('BurnCheckToken, 0),('TreasuryCheckProof, 1),('MintCheckRedeemer, 2)]
--- PlutusTx.makeLift ''ScriptPurpose
--- PlutusTx.makeIsDataIndexed
---   ''ScriptPurpose
---   [ ('Minting, 0),
---     ('Spending, 1),
---     ('Rewarding, 2),
---     ('Certifying, 3)
---   ]
 
 {-# INLINABLE getGroupInfoParams #-}
 getGroupInfoParams :: GroupInfoParams -> ParamType -> BuiltinByteString
@@ -340,15 +275,14 @@ packBool b
 packIntegerArray :: [Integer] -> BuiltinByteString
 packIntegerArray [] = emptyByteString
 packIntegerArray [x] = packInteger x
-packIntegerArray (i:ls) = appendByteString (packInteger i) (packIntegerArray ls) --tail
-  -- where tail = packIntegerArray ls
+packIntegerArray (i:ls) = appendByteString (packInteger i) (packIntegerArray ls)
 
 
 {-# INLINABLE packInteger #-}
 -- | Pack an integer into a byte string with a leading
 -- sign byte in little-endian order
 packInteger :: Integer -> BuiltinByteString
-packInteger k -- = if k < 0 then consByteString 1 (go (negate k) emptyByteString) else consByteString 0 (go k emptyByteString)
+packInteger k
   | k == 0 = consByteString 0 emptyByteString
   | k < 0  = consByteString 0x80 (go (negate k) emptyByteString)
   | otherwise = go k emptyByteString
@@ -367,12 +301,6 @@ findOwnInput' V2.ScriptContext{V2.scriptContextTxInfo=V2.TxInfo{V2.txInfoInputs}
                                                  then Just i
                                                  else go rest
 findOwnInput' _ = Nothing
-
--- {-# INLINABLE ownAddress #-}
--- -- | Get the validator and datum hashes of the output that is curently being validated
--- ownAddress :: V2.ScriptContext -> Address
--- ownAddress (findOwnInput' -> Just V2.TxInInfo{V2.txInInfoResolved=V2.TxOut{V2.txOutAddress=addr}}) = addr
--- ownAddress _ = traceError "Lg" -- "Can't get validator and datum hashes"
 
 {-# INLINABLE getGroupInfo #-}
 getGroupInfo :: V2.TxInfo -> CurrencySymbol -> TokenName -> GroupInfoParams
@@ -393,7 +321,6 @@ getTotalAmountOfAssetInInput ctx checkTokenSymbol checkTokenName =
           !totalOutAmount = valueOf totoalOutValue checkTokenSymbol checkTokenName
       in totalOutAmount
 
-
 {-# INLINABLE isSingleAsset #-}
 isSingleAsset :: Value -> CurrencySymbol -> TokenName -> Bool
 isSingleAsset v cs tk = all (\(cs',tk',_) -> (cs' == cs && tk' == tk) || (cs' == Ada.adaSymbol  && tk' == Ada.adaToken)) $ flattenValue v
@@ -413,24 +340,10 @@ getAmountOfCheckTokenInOutput ctx checkTokenSymbol checkTokenName =
       let !outputValue = V2.valueProduced (V2.scriptContextTxInfo ctx)
           !lockedAmount = valueOf outputValue checkTokenSymbol checkTokenName
       in lockedAmount
-        -- if (isSingleAsset outputValue checkTokenSymbol checkTokenName) then lockedAmount
-        -- else 
-        --   if lockedAmount == 0 then lockedAmount
-        --   else traceError "mkt"
 
 {-# INLINABLE getNonsenseDatum #-}
 getNonsenseDatum ::Datum -> Maybe NonsenseDatum
 getNonsenseDatum d = fromBuiltinData @NonsenseDatum $ getDatum d
-
--- {-# INLINABLE scriptOutputsAt' #-}
--- scriptOutputsAt' :: ValidatorHash -> BuiltinByteString -> V2.TxInfo -> [(Datum, Value)]
--- scriptOutputsAt' h stk p =
---     let flt V2.TxOut{V2.txOutDatum=d, V2.txOutAddress=Address (ScriptCredential s) stk', V2.txOutValue} | s == h && (stakeCredentialToBytes stk') == stk = case d of
---           OutputDatum datum -> case getNonsenseDatum datum of
---             Just nonsense -> Just (datum, txOutValue)
---             _ -> Nothing
---         flt _ = Nothing
---     in mapMaybe flt (V2.txInfoOutputs p)
 
 {-# INLINABLE valueLockedBy' #-}
 valueLockedBy' :: V2.TxInfo -> ValidatorHash -> BuiltinByteString -> Value
@@ -442,27 +355,6 @@ valueLockedBy' ptx h stk =
 {-# INLINABLE nonsenseDatum #-}
 nonsenseDatum :: OutputDatum
 nonsenseDatum = OutputDatum (Datum (PlutusTx.toBuiltinData (NonsenseDatum 1)))
-
-
--- {-# INLINABLE scriptOutputsAt' #-}
--- scriptOutputsAt' :: ValidatorHash -> BuiltinByteString -> V2.TxInfo -> Bool ->[(Datum, Value)]
--- scriptOutputsAt' (ValidatorHash vh) stk V2.TxInfo{V2.txInfoOutputs = os} bCheckDatum = go [] os
---   where
---     go v [] = v
---     go v (V2.TxOut{V2.txOutValue,V2.txOutAddress= Address payCredential stkCredential,V2.txOutDatum} : rest) = 
---       if ((scredentialToBytes payCredential) == vh) && ((stakeCredentialToBytes stkCredential) == stk) then
---         case txOutDatum of
---           OutputDatum datum ->
---             if bCheckDatum then
---               case getNonsenseDatum datum of
---                 Just _ -> go ((datum,txOutValue) : v) rest
---                 _ -> go v rest
---             else go ((datum,txOutValue) : v) rest
---           _ -> go v rest
---       else go v rest
-
-
-
 
 {-# INLINABLE scriptOutputsAt' #-}
 scriptOutputsAt' :: ValidatorHash -> BuiltinByteString -> V2.TxInfo -> Bool ->[(Datum, Value)]
@@ -484,15 +376,6 @@ scriptOutputsAt2 addr p od =
     let flt V2.TxOut{V2.txOutDatum=d, V2.txOutAddress, V2.txOutValue} | addr == txOutAddress &&  d == od = Just txOutValue
         flt _ = Nothing
     in mapMaybe flt (V2.txInfoOutputs p)
-
--- {-# INLINABLE scriptOutputsAt2 #-}
--- scriptOutputsAt2 :: Address -> V2.TxInfo -> OutputDatum ->[Value]
--- scriptOutputsAt2 addr V2.TxInfo{V2.txInfoOutputs = os} od = go [] os
---   where
---     go v [] = v
---     go v (V2.TxOut{V2.txOutValue,V2.txOutAddress,V2.txOutDatum} : rest) = 
---       if (txOutAddress == addr) && (txOutDatum == od) then go (txOutValue:v) rest
---       else go v rest
 
 {-# INLINABLE outputsOf #-}
 -- | Get the list of 'TxOut' outputs of the pending transaction at

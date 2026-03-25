@@ -41,12 +41,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import PlutusTx (BuiltinData, CompiledCode, Lift, applyCode, liftCode, fromData)
 import GHC.Generics (Generic)
 import Plutus.Script.Utils.Typed (validatorScript,validatorAddress,validatorHash)
--- import Plutus.V1.Ledger.Scripts (unValidatorScript)
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
-
--- import Plutus.V2.Ledger.Tx (isPayToScriptOut)
-
--- import PlutusTx.Builtins (decodeUtf8,sha3_256,appendByteString)
 
 {-# INLINABLE mkPolicy #-}
 mkPolicy :: TxOutRef -> () -> ScriptContext -> Bool
@@ -87,3 +82,4 @@ groupNFTScript mgrData = PlutusScriptSerialised . SBS.toShort $ LBS.toStrict (sc
 
 groupNFTScriptShortBs :: TxOutRef -> SBS.ShortByteString
 groupNFTScriptShortBs mgrData = SBS.toShort . LBS.toStrict $ (scriptAsCbor mgrData)
+

@@ -14,7 +14,6 @@ module CrossChain.GroupNFTHolder
   ,groupNFTHolderScriptHash
   ,groupNFTHolderAddress
   , GroupInfoParams (..)
-  -- ,GroupAdminNFTInfo (..)
   ,ParamType (..)
   ) where
 
@@ -25,23 +24,16 @@ import Codec.Serialise
 import Data.ByteString.Lazy qualified as LBS
 import Data.ByteString.Short qualified as SBS
 import Plutus.V1.Ledger.Value
--- import Plutus.Script.Utils.V2.Scripts as Scripts
 import Ledger.Address (PaymentPrivateKey (PaymentPrivateKey, unPaymentPrivateKey), PaymentPubKey (PaymentPubKey),PaymentPubKeyHash (..),unPaymentPubKeyHash,toPubKeyHash,toValidatorHash)
 import Plutus.V2.Ledger.Api qualified as Plutus
 import Plutus.V2.Ledger.Contexts as V2
 import Plutus.Script.Utils.V2.Typed.Scripts qualified as PV2
 
 import PlutusTx qualified
--- import PlutusTx.Builtins
 import PlutusTx.Builtins
--- import PlutusTx.Eq as PlutusTx
--- import PlutusTx.Eq()
 import PlutusTx.Prelude hiding (SemigroupInfo (..), unless, (.))
--- import PlutusTx.Prelude qualified as PlutusPrelude
 import           Ledger               hiding (singleton,validatorHash)
--- import Ledger.Typed.Scripts qualified as Scripts
 import Plutus.V1.Ledger.Scripts (getDatum)
--- import Plutus.Script.Utils.Typed (validatorScript,validatorAddress,validatorHash)
 import Plutus.V1.Ledger.Scripts (unValidatorScript)
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import CrossChain.Types
@@ -58,7 +50,7 @@ instance Scripts.ValidatorTypes Holding where
 mkValidator :: GroupAdminNFTInfo -> () -> Integer -> V2.ScriptContext -> Bool
 mkValidator (GroupAdminNFTInfo (GroupNFTTokenInfo groupNftSymbol groupNftName) (AdminNftTokenInfo adminNftSymbol adminNftName)) _ action ctx = traceIfFalse "noauth" isAuthorized
   && traceIfFalse "gmi"  inputHasToken  
-  && traceIfFalse "gmo"   outputHasToken --(outputHasToken && isRigthOWner) -- || (checkMintedOrBurnAmount $ negate 1))
+  && traceIfFalse "gmo"   outputHasToken
   && traceIfFalse "wdat" checkNewDatum
   where 
     info :: V2.TxInfo
@@ -91,7 +83,6 @@ mkValidator (GroupAdminNFTInfo (GroupNFTTokenInfo groupNftSymbol groupNftName) (
     inputHasToken =  (groupTokenValue ownInput) > 0
 
     isTargetValidatorHash:: V2.TxOut -> Bool
-    -- isTargetValidatorHash V2.TxOut{V2.txOutAddress=Address (Plutus.ScriptCredential s) _} = s == (ValidatorHash ( getGroupInfoParams (groupInfoParams ownInput) Version) )
     isTargetValidatorHash o = (groupTokenValue o) > 0
 
     lockedByTarget :: [V2.TxOut]
@@ -168,7 +159,6 @@ groupInfoTokenHolderScriptShortBs :: GroupAdminNFTInfo -> SBS.ShortByteString
 groupInfoTokenHolderScriptShortBs c = SBS.toShort . LBS.toStrict $ serialise  (script c)
 
 groupNFTHolderScript :: GroupAdminNFTInfo ->  PlutusScript PlutusScriptV2
--- groupNFTHolderScript = PlutusScriptSerialised . groupInfoTokenHolderScriptShortBs
 groupNFTHolderScript c = PlutusScriptSerialised
   . SBS.toShort
   . LBS.toStrict

@@ -16,7 +16,6 @@ module CrossChain.InboundToken
   ( inboundTokenScript
   , inboundTokenScriptShortBs
   , inboundTokenCurSymbol
-  -- , CheckTokenInfo (..)
   ) where
 
 
@@ -43,7 +42,6 @@ import Data.Aeson (FromJSON, ToJSON)
 import PlutusTx (BuiltinData, CompiledCode, Lift, applyCode, liftCode, fromData)
 import GHC.Generics (Generic)
 import Plutus.Script.Utils.Typed (validatorScript,validatorAddress,validatorHash)
--- import Plutus.V1.Ledger.Scripts (unValidatorScript)
 import Ledger.Typed.Scripts qualified as Scripts hiding (validatorHash)
 import CrossChain.Types 
 
