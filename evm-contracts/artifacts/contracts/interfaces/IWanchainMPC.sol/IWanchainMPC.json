@@ -1,0 +1,175 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IWanchainMPC",
+  "sourceName": "contracts/interfaces/IWanchainMPC.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "currentChainID",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPartners",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "tokenManager",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "smgAdminProxy",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "smgFeeProxy",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "quota",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "sigVerifier",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getStoremanGroupConfig",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint8",
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deposit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "chain1",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "chain2",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "curve1",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "curve2",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "gpk1",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "gpk2",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "endTime",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "curveId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "signature",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "groupKeyX",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "groupKeyY",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "randomPointX",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "randomPointY",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "message",
+          "type": "bytes32"
+        }
+      ],
+      "name": "verify",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

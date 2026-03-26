@@ -104,3 +104,11 @@ dist
 .tern-port
 cross-chain/dist-newstyle/*
 sidechain-js/yarn.lock
+
+# Aiken build
+build/
+plutus.json
+
+# Haskell build (legacy)
+dist-newstyle/
+cabal.project.local

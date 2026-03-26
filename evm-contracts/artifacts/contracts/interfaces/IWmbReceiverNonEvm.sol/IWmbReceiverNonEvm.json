@@ -1,0 +1,39 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IWmbReceiverNonEvm",
+  "sourceName": "contracts/interfaces/IWmbReceiverNonEvm.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "messageId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "fromChainId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "from",
+          "type": "bytes"
+        }
+      ],
+      "name": "wmbReceiveNonEvm",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

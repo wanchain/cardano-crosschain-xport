@@ -46,7 +46,7 @@ validator outbound(outbound_policy: PolicyId) {
     expect [Pair(_, _)] =
       outputXport.value |> assets.tokens(outbound_policy) |> dict.to_pairs()
 
-    (sourceContract == output_own_input.address)? && (targetContract == redeemer.remoteContract)? && (cross_msg_data.functionCallData.functionName == "wmbReceive")? && (burn_quantity == -functionArgs.amount)? && (assets.quantity_of(
+    (sourceContract == output_own_input.address)? && (targetContract == redeemer.remoteContract)? && (cross_msg_data.functionCallData.functionName == "wmbReceiveNonEvm")? && (burn_quantity == -functionArgs.amount)? && (assets.quantity_of(
       output_own_input.value,
       redeemer.burn_policy,
       redeemer.burn_token_name,
