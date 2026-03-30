@@ -30,7 +30,7 @@ And it also sends the message to the other chain for token cross-chain transfer 
 yarn install
 
 ```
-2. config .evn 
+2. config .env 
 ```txt
 BLOCKFROST_API_KEY=<YOUR BLOCKFROST API KEY>
 ACCOUNT_SEED1=<inbound monitor account privateKey 32 bytes> // like 0000000000000000000000000000000000000000000000000000000000000000
