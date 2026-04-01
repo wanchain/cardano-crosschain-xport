@@ -1,0 +1,37 @@
+name: msg-agent CI
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "msg-agent/**"
+      - ".github/workflows/msg-agent-ci.yml"
+  pull_request:
+    paths:
+      - "msg-agent/**"
+      - ".github/workflows/msg-agent-ci.yml"
+
+jobs:
+  test:
+    name: TypeScript Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: msg-agent
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: msg-agent/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: yarn test

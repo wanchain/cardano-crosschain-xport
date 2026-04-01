@@ -3,13 +3,22 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts monitor",
+    "dev": "ts-node src/index.ts monitor",
+    "client": "ts-node src/index.ts client",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "dependencies": {
-    "@meshsdk/core": "^1.9.0-beta.89",
+    "@meshsdk/core": "1.9.0-beta.89",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2"
   }
 }
