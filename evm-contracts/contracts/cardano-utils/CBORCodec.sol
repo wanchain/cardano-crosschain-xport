@@ -461,11 +461,10 @@ library RFC8949 {
                     _appendByte(encoder, majorTypeByte | SimpleValue.False);
                 } else if (value.intValue == 1) {
                     _appendByte(encoder, majorTypeByte | SimpleValue.True);
-                } else if (value.intValue == 0) {
+                } else if (value.intValue == 22) {
                     _appendByte(encoder, majorTypeByte | SimpleValue.Null);
                 } else {
-                    require(value.intValue < 32, "Simple value out of range");
-                    _appendByte(encoder, majorTypeByte | uint8(value.intValue));
+                    revert("CBORCodec: unsupported simple value");
                 }
             } else {
                 if (value.data.length == 2) {
@@ -552,7 +551,7 @@ library RFC8949 {
     function encodeNull() internal pure returns (bytes memory) {
         CborValue memory cborValue;
         cborValue.majorType = MajorType.Simple;
-        cborValue.intValue = 0;
+        cborValue.intValue = 22; // CBOR simple value 22 = Null
         return encode(cborValue);
     }
 

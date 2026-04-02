@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 cross-chain/data/*
 msg-demo/build/*
 msg-demo/aiken.lock
+msg-agent/yarn.lock
+evm-contracts/artifacts/
+evm-contracts/cache/
