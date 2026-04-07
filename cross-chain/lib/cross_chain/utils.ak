@@ -1,10 +1,47 @@
 use aiken/collection/list
+use aiken/option.{is_none}
+use cardano/address.{Address}
 use cardano/assets.{
-  AssetName, PolicyId, Value, ada_asset_name, ada_policy_id, flatten,
+  AssetName, PolicyId, Value, ada_asset_name, ada_policy_id, flatten, merge,
   quantity_of,
 }
-use cardano/transaction.{Output}
+use cardano/transaction.{Input, Output}
 use cross_chain/types.{GroupInfoIndex, GroupInfoParams, GroupNFTTokenInfo}
+
+/// Sum values at all outputs matching the given address.
+pub fn value_at_address(outputs: List<Output>, addr: Address) -> Value {
+  list.foldl(
+    outputs,
+    assets.zero,
+    fn(output, acc) {
+      if output.address == addr {
+        merge(output.value, acc)
+      } else {
+        acc
+      }
+    },
+  )
+}
+
+/// Filter outputs at a specific address.
+pub fn outputs_at(outputs: List<Output>, addr: Address) -> List<Output> {
+  list.filter(outputs, fn(output) { output.address == addr })
+}
+
+/// Sum values across all inputs (optionally filtered by address).
+pub fn total_input_value(inputs: List<Input>, addr: Option<Address>) -> Value {
+  list.foldl(
+    inputs,
+    assets.zero,
+    fn(input, acc) {
+      if is_none(addr) || Some(input.output.address) == addr {
+        merge(input.output.value, acc)
+      } else {
+        acc
+      }
+    },
+  )
+}
 
 /// Check if a Value contains only the specified token and ADA.
 /// No other tokens are allowed.

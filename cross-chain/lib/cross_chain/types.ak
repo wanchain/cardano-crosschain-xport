@@ -76,6 +76,12 @@ pub type MsgAddress {
   LocalAddress(Address)
 }
 
+/// Beneficiary for cross-chain token transfers
+pub type Beneficiary {
+  address: MsgAddress,
+  amount: Int,
+}
+
 /// Function call data for cross-chain messages
 pub type FunctionCallData {
   function_name: ByteArray,

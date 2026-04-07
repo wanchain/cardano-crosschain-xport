@@ -1,0 +1,25 @@
+services:
+  yaci-devkit:
+    image: bloxbean/yaci-cli:0.10.6
+    ports:
+      - "8080:8080"    # Yaci Store — Blockfrost-compatible API
+      - "10000:10000"  # Admin API
+      - "5173:5173"    # Yaci Viewer (web explorer)
+    # The bundled yaci-cli.sh uses bash == inside [ ] but runs under sh.
+    # Override the entrypoint to launch the Java jar directly.
+    entrypoint: ["java", "-jar", "/app/yaci-cli.jar"]
+    # Instruct the CLI to start the devnet services
+    command: ["up", "--enable-yaci-store"] 
+    environment:
+      - yaci_store_enabled=true
+    volumes:
+      - yaci-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/epochs/latest"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  yaci-data:

@@ -105,9 +105,8 @@ dist
 cross-chain/dist-newstyle/*
 sidechain-js/yarn.lock
 
-# Aiken build
+# Aiken build artifacts (plutus.json is committed — needed by msg-agent at runtime)
 build/
-plutus.json
 
 # Haskell build (legacy)
 dist-newstyle/

@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 dotenv.config({ path: path.join(__dirname, '../', '.env') });
 
-import { BlockfrostProvider, MeshTxBuilder, MeshWallet, Output, resolveScriptHash, mConStr0, Transaction, serializeData } from '@meshsdk/core';
+import { BlockfrostProvider, YaciProvider, MeshTxBuilder, MeshWallet, Output, resolveScriptHash, mConStr0, Transaction, serializeData } from '@meshsdk/core';
 import { mConStr1, mScriptAddress, UTxO } from "@meshsdk/common";
 import contractsInfo from "./scripts";
 import { defaultConfig } from "./config";
@@ -23,10 +23,16 @@ console.log(`xportScript address: ${contractsInfo.xportAddress}`);
 
 console.log(`demoTokenScript policy: ${contractsInfo.demoTokenPolicy}`);
 
-if (!process.env.BLOCKFROST_API_KEY) {
-    throw new Error('BLOCKFROST_API_KEY environment variable is not set');
-}
-const provider = new BlockfrostProvider(process.env.BLOCKFROST_API_KEY);
+// YACI_ADMIN_URL → use YaciProvider (local devnet with correct cost models).
+// BLOCKFROST_URL → use BlockfrostProvider with custom URL.
+// BLOCKFROST_API_KEY → use BlockfrostProvider with hosted Blockfrost.
+const provider = process.env.YACI_ADMIN_URL
+    ? new YaciProvider(process.env.YACI_ADMIN_URL + '/local-cluster/api')
+    : (() => {
+        const endpoint = process.env.BLOCKFROST_URL || process.env.BLOCKFROST_API_KEY;
+        if (!endpoint) throw new Error('YACI_ADMIN_URL, BLOCKFROST_URL, or BLOCKFROST_API_KEY must be set');
+        return new BlockfrostProvider(endpoint);
+    })();
 
 
 interface TransferInfo {
@@ -113,7 +119,7 @@ let walletInbound: MeshWallet;
 let walletOutbound: MeshWallet;
 let walletUser: MeshWallet;
 let badTaskUtxos = new Map<string, number>;
-async function fetchTask(provider: BlockfrostProvider, taskType: TaskType) {
+async function fetchTask(provider: BlockfrostProvider | YaciProvider, taskType: TaskType) {
     const taskContractAddress = taskType == TaskType.INBOUND ? contractsInfo.inboundDemoAddress : contractsInfo.outboundDemoAddress;
     let taskPool = taskType == TaskType.INBOUND ? inboundTaskPool : outboundTaskPool;
     const utxos = await provider.fetchAddressUTxOs(taskContractAddress);

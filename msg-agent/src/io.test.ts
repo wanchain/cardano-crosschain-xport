@@ -150,16 +150,18 @@ describe('config validation', () => {
         expect(defaultConfig.demoToken?.compiledCode).toBeTruthy();
     });
 
-    it('BLOCKFROST_API_KEY check would throw if missing', () => {
+    it('BLOCKFROST endpoint check would throw if missing', () => {
         // This tests the guard we added — in the actual module it runs at import time
         // We just verify the pattern works
-        const check = (key: string | undefined) => {
-            if (!key) throw new Error('BLOCKFROST_API_KEY environment variable is not set');
-            return key;
+        const check = (url: string | undefined, key: string | undefined) => {
+            const endpoint = url || key;
+            if (!endpoint) throw new Error('BLOCKFROST_URL or BLOCKFROST_API_KEY environment variable is not set');
+            return endpoint;
         };
 
-        expect(() => check(undefined)).toThrow('BLOCKFROST_API_KEY');
-        expect(() => check('')).toThrow('BLOCKFROST_API_KEY');
-        expect(check('test-key')).toBe('test-key');
+        expect(() => check(undefined, undefined)).toThrow('BLOCKFROST_URL or BLOCKFROST_API_KEY');
+        expect(() => check('', '')).toThrow('BLOCKFROST_URL or BLOCKFROST_API_KEY');
+        expect(check('http://localhost:8080/api/v1', undefined)).toBe('http://localhost:8080/api/v1');
+        expect(check(undefined, 'test-key')).toBe('test-key');
     });
 });

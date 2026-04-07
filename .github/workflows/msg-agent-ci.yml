@@ -5,15 +5,17 @@ on:
     branches: ["main"]
     paths:
       - "msg-agent/**"
+      - "cross-chain/**"
       - ".github/workflows/msg-agent-ci.yml"
   pull_request:
     paths:
       - "msg-agent/**"
+      - "cross-chain/**"
       - ".github/workflows/msg-agent-ci.yml"
 
 jobs:
   test:
-    name: TypeScript Build & Test
+    name: TypeScript Build & Unit Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,5 +35,39 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Run tests
-        run: yarn test
+      - name: Run unit tests
+        run: npx vitest run src/
+
+  e2e:
+    name: E2E Tests (Yaci DevKit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: msg-agent
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: msg-agent/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Start Yaci DevKit
+        working-directory: .
+        run: |
+          docker compose up -d
+          echo "Waiting for Yaci DevKit to be healthy..."
+          for i in $(seq 1 60); do
+            if docker compose ps --format json | grep -q '"healthy"'; then
+              echo "Yaci DevKit is healthy after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run E2E tests
+        run: yarn test:e2e

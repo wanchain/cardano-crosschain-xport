@@ -1,5 +1,0 @@
-## Building
-
-```sh
-aiken build
-```
