@@ -38,7 +38,7 @@ abstract contract WmbRetryableApp is WmbApp {
         bytes32 messageHash
     );
 
-    event MessageDropped(
+    event MessageDroped(
         bytes32 indexed messageId
     );
 
@@ -130,6 +130,6 @@ abstract contract WmbRetryableApp is WmbApp {
     ) internal virtual {
         // clear the stored message
         delete failedMessages[messageId];
-        emit MessageDropped(messageId);
+        emit MessageDroped(messageId);
     }
 }

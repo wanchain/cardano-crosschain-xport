@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { BlockfrostProvider, MeshWallet, MeshTxBuilder, resolveScriptHash, applyParamsToScript, resolvePlutusScriptAddress, deserializeDatum, PlutusScript, ForgeScript } from '@meshsdk/core';
 import { mConStr0, mConStr1 } from '@meshsdk/common';
-import { waitForYaci, createDevnet, topupAddress, submitTx, waitForTx, sleep, YACI_STORE_URL } from './helpers/yaci';
+import { waitForYaci, createDevnet, topupAddress, waitForFunds, submitTx, waitForTx, sleep, YACI_STORE_URL } from './helpers/yaci';
 import { createWallet, ensureCollateral, getBalance } from './helpers/wallet';
 import { deployAll, DeploymentResult } from './helpers/deploy';
 import { createInboundTask } from './helpers/inbound';
@@ -48,11 +48,11 @@ beforeAll(async () => {
     wallet2 = w2.wallet; addr2 = w2.address;
     wallet3 = w3.wallet; addr3 = w3.address;
 
-    // Fund wallets
+    // Fund wallets and wait for funds to be indexed
     await topupAddress(addr1, 10000);
     await topupAddress(addr2, 10000);
     await topupAddress(addr3, 10000);
-    await sleep(3000); // Wait for funds to appear
+    await waitForFunds(addr1, 5_000_000_000); // Wait for at least 5k ADA
 
     // Deploy all validators
     deployment = await deployAll(wallet1, provider);
@@ -369,6 +369,9 @@ describe('Negative Tests', () => {
 
 describe('Edge Cases', () => {
     it('inbound with amount=1 (minimum)', async () => {
+        // Topup wallet to ensure sufficient ADA after previous tests
+        await topupAddress(addr1, 5000);
+        await sleep(3000);
         const txHash = await createInboundTask({
             wallet: wallet1,
             provider,
@@ -381,6 +384,7 @@ describe('Edge Cases', () => {
     });
 
     it('multiple inbound tasks consume separate check tokens', async () => {
+        await ensureCollateral(wallet1);
         const checkTokenUnit = deployment.checkTokenSymbol + deployment.checkTokenName;
         const beforeUtxos = await provider.fetchAddressUTxOs(deployment.inboundMintCheckAddress);
         const beforeCount = beforeUtxos.filter(u =>

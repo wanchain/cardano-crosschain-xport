@@ -35,9 +35,6 @@ const loadCrossChainComp = (name: string) => {
     }
 };
 
-// Backward compat alias for tests
-export const loadContractComp = loadCrossChainComp;
-
 export const defaultConfig: Config = {
     OUTBOUND_TOKEN_NAME: Buffer.from("OutboundTokenCoin", 'ascii').toString('hex'),
     GroupNftHolder: process.env.GROUP_NFT_HOLDER || 'addr_test1wpm9vmfxjk0lcrcwzfx76zmcyxpfluux9cwppyu9639thycpks2wj',

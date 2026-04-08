@@ -10,7 +10,7 @@
     "client": "ts-node src/index.ts client",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy:local": "ts-node scripts/deploy-local.ts",
+    "deploy:local": "ts-node scripts/deploy-and-generate-env.ts",
     "test:local": "ts-node scripts/test-local.ts",
     "setup:preprod": "ts-node scripts/setup-preprod.ts",
     "deploy:prod": "ts-node scripts/deploy-prod-validators.ts",

@@ -1,0 +1,26 @@
+{
+  "name": "cross-chain-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-chain E2E tests: Hardhat (EVM) + Yaci DevKit (Cardano)",
+  "scripts": {
+    "test": "vitest run test/"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2",
+    "@meshsdk/core": "1.9.0-beta.89",
+    "@meshsdk/common": "1.9.0-beta.89",
+    "@noble/ed25519": "^2.2.3",
+    "@noble/hashes": "^1.7.1",
+    "libsodium-wrappers-sumo": "0.7.15"
+  },
+  "resolutions": {
+    "libsodium-wrappers-sumo": "0.7.15"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0",
+    "typescript": "^5.5.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}

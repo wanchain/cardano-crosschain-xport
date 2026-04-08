@@ -81,17 +81,9 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
     // Status of a Storeman Group
     enum GroupStatus { none, initial, curveSeted, failed, selected, ready, unregistered, dismissed }
 
-    event MessageDispatchedV2(bytes32 messageId, address sender, uint256 toChainId, address to, uint256 gasLimit, bytes data);
+    event MessageDispatchedV2(bytes32 messageId, address sender, uint256 toChainId, address to, uint256 gasLimit, bytes data);    
 
-    event MessageDispatchedNonEvm(bytes32 messageId, address sender, uint256 toChainId, bytes to, uint256 gasLimit, bytes data);
-
-    event MessageFailed(bytes32 indexed messageId, uint256 indexed sourceChainId, bytes errorData);
-
-    event SignatureVerifierSet(address indexed newVerifier);
-    event GasLimitSet(uint256 maxGasLimit, uint256 minGasLimit, uint256 defaultGasLimit);
-    event MaxMessageLengthSet(uint256 maxMessageLength);
-    event BaseFeesSet(uint256[] targetChainIds, uint256[] baseFees);
-    event FeeWithdrawn(address indexed to, uint256 amount);
+    event MessageDispatchedNonEvm(bytes32 messageId, address sender, uint256 toChainId, bytes to, uint256 gasLimit, bytes data);    
 
     function initialize(address admin, address _cross) public initializer {
         require(admin != address(0), "WmbGateway: Invalid admin address");
@@ -102,6 +94,7 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
         uint _chainId = IWanchainMPC(_cross).currentChainID();
         require(_chainId != 0, "chainId is empty");
 
+        IWanchainMPC(_cross).getPartners();
         chainId = _chainId;
         maxGasLimit = 8_000_000;
         minGasLimit = 150_000;
@@ -128,22 +121,20 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
         emit MessageDispatched(messageId, msg.sender, toChainId, to, data);
     }
 
-    function dispatchMessageV2(uint256 toChainId, address to, uint256 gasLimit, bytes calldata data) external payable nonReentrant returns (bytes32 messageId) {
+    function dispatchMessageV2(uint256 toChainId, address to, uint256 gasLimit, bytes calldata data) external nonReentrant returns (bytes32 messageId) {
         require(supportedDstChains[toChainId], "WmbGateway: Unsupported destination chain");
         require(gasLimit <= maxGasLimit, "WmbGateway: Gas limit exceeds maximum");
         require(gasLimit >= minGasLimit, "WmbGateway: Gas limit too low");
-        require(msg.value >= gasLimit * baseFees[toChainId], "WmbGateway: Fee too low");
         
         messageId = _getMessageId(toChainId, to, data);
         messageGasLimit[messageId] = gasLimit;
         emit MessageDispatchedV2(messageId, msg.sender, toChainId, to, gasLimit, data);
     }
 
-    function dispatchMessageNonEvm(uint256 toChainId, bytes memory to, uint256 gasLimit, bytes calldata data) external payable nonReentrant returns (bytes32 messageId) {
+    function dispatchMessageNonEvm(uint256 toChainId, bytes memory to, uint256 gasLimit, bytes calldata data) external nonReentrant returns (bytes32 messageId) {
         require(supportedDstChains[toChainId], "WmbGateway: Unsupported destination chain");
         require(gasLimit <= maxGasLimit, "WmbGateway: Gas limit exceeds maximum");
         require(gasLimit >= minGasLimit, "WmbGateway: Gas limit too low");
-        require(msg.value >= gasLimit * baseFees[toChainId], "WmbGateway: Fee too low");
         
         messageId = _getMessageId(toChainId, address(uint160(uint256(keccak256(to)))), data);
         messageGasLimit[messageId] = gasLimit;
@@ -311,13 +302,11 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
         for (uint256 i = 0; i < _targetChainIds.length; i++) {
             baseFees[_targetChainIds[i]] = _baseFees[i];
         }
-        emit BaseFeesSet(_targetChainIds, _baseFees);
     }
 
     function setSignatureVerifier(address _signatureVerifier) external {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "WmbGateway: Caller is not an admin");
         signatureVerifier = _signatureVerifier;
-        emit SignatureVerifierSet(_signatureVerifier);
     }
 
     function setGasLimit(uint256 _maxGasLimit, uint256 _minGasLimit, uint256 _defaultGasLimit) external {
@@ -325,20 +314,16 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
         maxGasLimit = _maxGasLimit;
         minGasLimit = _minGasLimit;
         defaultGasLimit = _defaultGasLimit;
-        emit GasLimitSet(_maxGasLimit, _minGasLimit, _defaultGasLimit);
     }
 
     function setMaxMessageLength(uint256 _maxMessageLength) external {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "WmbGateway: Caller is not an admin");
         maxMessageLength = _maxMessageLength;
-        emit MaxMessageLengthSet(_maxMessageLength);
     }
 
     function withdrawFee(address payable _to) external {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "WmbGateway: Caller is not an admin");
-        emit FeeWithdrawn(_to, address(this).balance);
-        (bool success, ) = _to.call{value: address(this).balance}("");
-        require(success, "WmbGateway: transfer failed");
+        _to.transfer(address(this).balance);
     }
 
     function setSupportedDstChains(uint256[] calldata targetChainIds, bool[] calldata supported) external {
@@ -393,7 +378,7 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
      * @dev Verifies an MPC signature for a given message and Storeman Group ID
      * @param sig The signature to verify
      */
-    function _verifyMpcSignature(SigData memory sig) internal view {
+    function _verifyMpcSignature(SigData memory sig) internal {
         uint curveID;
         bytes memory PK;
 
@@ -456,7 +441,10 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
         try IWmbReceiver(data.targetContract).wmbReceive{gas: data.gasLimit}(data.messageData, messageId, data.sourceChainId, data.sourceContract) {
             emit MessageIdExecuted(data.sourceChainId, messageId);
         } catch (bytes memory reason) {
-            emit MessageFailed(messageId, data.sourceChainId, reason);
+            revert MessageFailure({
+                messageId: messageId,
+                errorData: reason
+            });
         }
     }
 
@@ -472,7 +460,10 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
         try IWmbReceiverNonEvm(data.targetContract).wmbReceiveNonEvm{gas: data.gasLimit}(data.messageData, messageId, data.sourceChainId, data.sourceContract) {
             emit MessageIdExecuted(data.sourceChainId, messageId);
         } catch (bytes memory reason) {
-            emit MessageFailed(messageId, data.sourceChainId, reason);
+            revert MessageFailure({
+                messageId: messageId,
+                errorData: reason
+            });
         }
     }
 
@@ -486,14 +477,16 @@ contract WmbGateway is AccessControl, Initializable, ReentrancyGuard, IWmbGatewa
         messageExecuted[messageId] = true;
         
         uint length = data.messages.length;
-        require(length > 0, "WmbGateway: empty batch");
-        uint256 gasPerMessage = data.gasLimit / length;
         uint i = 0;
         for (i = 0; i < length; i++) {
-            try IWmbReceiver(data.messages[i].to).wmbReceive{gas: gasPerMessage}(data.messages[i].data, messageId, data.sourceChainId, data.sourceContract) {
+            try IWmbReceiver(data.messages[i].to).wmbReceive{gas: gasleft()}(data.messages[i].data, messageId, data.sourceChainId, data.sourceContract) {
                 // do nothing
             } catch (bytes memory reason) {
-                emit MessageFailed(messageId, data.sourceChainId, reason);
+                revert MessageBatchFailure({
+                    messageId: messageId,
+                    messageIndex: i,
+                    errorData: reason
+                });
             }
         }
         

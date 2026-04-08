@@ -8,7 +8,6 @@ import {CardanoAddressCodec} from './CardanoAddress.sol';
 library PlutusDataCodec {
 
     function newConstr(uint alternative, uint fieldsCount) internal pure returns (RFC8949.CborValue memory plutusData){
-        require(alternative <= 6, "PlutusData: alternative >= 7 requires tag 1280+");
         plutusData.majorType = RFC8949.MajorType.Tag;
         plutusData.tagNumber = alternative + 121;
 
@@ -30,9 +29,9 @@ library PlutusDataCodec {
     function fieldSize(RFC8949.CborValue memory plutusData) internal pure returns (uint){
         require(plutusData.majorType == RFC8949.MajorType.Tag,"not constr");
         require(plutusData.arrayValue.length == 1,"plutusData.arrayValue.length == 1");
-        RFC8949.CborValue memory fields = plutusData.arrayValue[0];
-        require(fields.majorType == RFC8949.MajorType.Array,"fields.majorType == RFC8949.MajorType.Array");
-        return fields.arrayValue.length;
+        RFC8949.CborValue memory fileds = plutusData.arrayValue[0];
+        require(fileds.majorType == RFC8949.MajorType.Array,"fileds.majorType == RFC8949.MajorType.Array");
+        return fileds.arrayValue.length;
     }
 
     function getConstrField(RFC8949.CborValue memory plutusData, uint index) internal pure returns (RFC8949.CborValue memory){

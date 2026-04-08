@@ -38,4 +38,4 @@ jobs:
         run: npx hardhat compile
 
       - name: Run tests
-        run: npx hardhat test test/CBORCodec.test.ts test/CardanoCBORCodec.test.ts test/PlutusData.test.ts test/WmbGateway.test.ts test/WmbAppV3.test.ts
+        run: npx hardhat test test/CBORCodec.test.ts test/CardanoCBORCodec.test.ts test/PlutusData.test.ts test/WmbGateway.test.ts test/WmbAppV3.test.ts test/E2E.test.ts

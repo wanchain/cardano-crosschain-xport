@@ -63,7 +63,7 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
         inboundTokenRemote = _tokenRemote;
         remoteChainId = _remoteChainId;
 
-        _setTrustedRemoteNonEvm(remoteChainId, inboundTokenRemote, true);
+        setTrustedRemoteNonEvm(remoteChainId, inboundTokenRemote, true);
         emit ConfigTokenRemote(inboundTokenRemote);
     }
 
@@ -74,11 +74,11 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
         outboundTokenRemote = _tokenRemote;
         remoteChainId = _remoteChainId;
 
-        _setTrustedRemoteNonEvm(remoteChainId, outboundTokenRemote, true);
+        setTrustedRemoteNonEvm(remoteChainId, outboundTokenRemote, true);
         emit ConfigTokenRemote(outboundTokenRemote);
     }
 
-    function send(bytes memory plutusData) external payable {
+    function send(bytes memory plutusData) external {
         require(outboundTokenRemote.length != 0, "tokenRemote not set");
 
         // decode plutusData
@@ -208,6 +208,7 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
                 "fields.arrayValue[1].arrayValue[0].data.length"
             );
             uint len = fields.arrayValue[1].arrayValue[0].data.length;
+            require(len <= 32, "amount too large");
             for (uint i = 0; i < len; i++) {
                 msgInfo.amount =
                     (msgInfo.amount << 8) |

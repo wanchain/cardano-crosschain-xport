@@ -33,6 +33,12 @@ contract TestWmbApp is WmbAppV3 {
         lastFrom        = from;
     }
 
+    // ── Expose setTrustedRemoteNonEvm for tests (internal in WmbAppV3) ──────
+
+    function setTrustedRemote(uint fromChainId, bytes memory from, bool trusted) external onlyOwner {
+        setTrustedRemoteNonEvm(fromChainId, from, trusted);
+    }
+
     // ── Expose _dispatchMessageNonEvm for integration tests ──────────────────
 
     function sendNonEvm(

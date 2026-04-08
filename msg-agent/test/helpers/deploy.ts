@@ -12,11 +12,11 @@
 
 import {
     BlockfrostProvider, MeshWallet, MeshTxBuilder, Transaction,
-    ForgeScript, applyParamsToScript, resolveScriptHash,
+    ForgeScript, applyParamsToScript, resolveScriptHash, resolvePaymentKeyHash,
     resolvePlutusScriptAddress, deserializeAddress,
-    PlutusScript, serializeData,
+    PlutusScript, serializeData, serializeNativeScript,
 } from '@meshsdk/core';
-import { mConStr0 } from '@meshsdk/common';
+import { mConStr0, type NativeScript } from '@meshsdk/common';
 import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha2';
 import { defaultConfig } from '../../src/config';
@@ -79,18 +79,39 @@ export interface DeploymentResult {
 export async function deployAll(
     wallet: MeshWallet,
     provider: BlockfrostProvider,
+    options?: {
+        /** Additional signer addresses for multisig AdminNFT (m-of-n). */
+        adminSigners?: string[];
+        /** Minimum signatures required (default: all signers). */
+        adminThreshold?: number;
+    },
 ): Promise<DeploymentResult> {
     const walletAddr = walletAddress(wallet);
     const walletPkh = deserializeAddress(walletAddr).pubKeyHash;
 
-    // ── Step 1: Mint AdminNFT (ForgeScript) ──────────────────────────────────
+    // ── Step 1: Mint AdminNFT ────────────────────────────────────────────────
     console.log('[deploy] Step 1: Mint AdminNFT');
-    const adminForgingScript = ForgeScript.withOneSignature(walletAddr);
+    let adminForgingScript: string;
+    const signerAddrs = options?.adminSigners ?? [walletAddr];
+    const threshold = options?.adminThreshold ?? signerAddrs.length;
+
+    if (signerAddrs.length > 1 || threshold < signerAddrs.length) {
+        // Multisig: atLeast(threshold, signers) or all(signers)
+        const signerKeyHashes = signerAddrs.map(addr => resolvePaymentKeyHash(addr));
+        const nativeScript: NativeScript = threshold >= signerKeyHashes.length
+            ? { type: 'all', scripts: signerKeyHashes.map(kh => ({ type: 'sig', keyHash: kh })) }
+            : { type: 'atLeast', required: threshold, scripts: signerKeyHashes.map(kh => ({ type: 'sig', keyHash: kh })) };
+        const { scriptCbor } = serializeNativeScript(nativeScript);
+        adminForgingScript = scriptCbor!;
+        console.log(`  AdminNFT multisig: ${threshold}-of-${signerKeyHashes.length}`);
+    } else {
+        adminForgingScript = ForgeScript.withOneSignature(walletAddr);
+        console.log('  AdminNFT: single-signer');
+    }
     const adminNftSymbol = resolveScriptHash(adminForgingScript);
     const adminNftName = Buffer.from('AdminNFT', 'ascii').toString('hex');
 
     const adminMintTx = new Transaction({ initiator: wallet });
-    // ForgeScript mintAsset hex-encodes assetName internally, so pass raw string
     adminMintTx.mintAsset(adminForgingScript, {
         assetName: 'AdminNFT',
         assetQuantity: '1',

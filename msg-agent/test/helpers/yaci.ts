@@ -92,6 +92,29 @@ export async function topupAddress(address: string, adaAmount: number, retries =
 }
 
 /**
+ * Wait for an address to have at least minLovelace balance.
+ * Polls the Store API until funds appear or timeout.
+ */
+export async function waitForFunds(address: string, minLovelace = 1_000_000, timeoutMs = 300_000): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        try {
+            const res = await fetch(`${YACI_STORE_URL}/addresses/${address}/utxos`);
+            if (res.ok) {
+                const utxos = await res.json() as Array<{ amount: Array<{ unit: string; quantity: string }> }>;
+                const totalLovelace = utxos.reduce((sum, u) => {
+                    const ada = u.amount.find(a => a.unit === 'lovelace');
+                    return sum + BigInt(ada?.quantity ?? '0');
+                }, 0n);
+                if (totalLovelace >= BigInt(minLovelace)) return;
+            }
+        } catch { /* not ready */ }
+        await sleep(2000);
+    }
+    throw new Error(`waitForFunds timeout: ${address} did not reach ${minLovelace} lovelace after ${timeoutMs}ms`);
+}
+
+/**
  * Submit a signed transaction to Yaci using raw fetch with application/cbor.
  *
  * The YaciProvider.submitTx method sends the wrong content type,

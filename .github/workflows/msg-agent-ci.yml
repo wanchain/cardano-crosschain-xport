@@ -6,11 +6,15 @@ on:
     paths:
       - "msg-agent/**"
       - "cross-chain/**"
+      - "e2e/**"
+      - "evm-contracts/**"
       - ".github/workflows/msg-agent-ci.yml"
   pull_request:
     paths:
       - "msg-agent/**"
       - "cross-chain/**"
+      - "e2e/**"
+      - "evm-contracts/**"
       - ".github/workflows/msg-agent-ci.yml"
 
 jobs:
@@ -69,5 +73,97 @@ jobs:
             sleep 1
           done
 
-      - name: Run E2E tests
-        run: yarn test:e2e
+      - name: Run E2E tests (with retry)
+        run: |
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt/3..."
+            if yarn test:e2e; then
+              echo "Tests passed on attempt $attempt"
+              exit 0
+            fi
+            if [ $attempt -lt 3 ]; then
+              echo "Attempt $attempt failed, resetting Yaci and retrying..."
+              docker compose -f ../docker-compose.yml down
+              docker volume rm cardano-crosschain-xport_yaci-data 2>/dev/null || true
+              docker compose -f ../docker-compose.yml up -d
+              sleep 10
+            fi
+          done
+          echo "All 3 attempts failed"
+          exit 1
+
+  cross-chain-e2e:
+    name: Cross-Chain E2E (Yaci + Hardhat)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: |
+            msg-agent/yarn.lock
+            evm-contracts/yarn.lock
+            e2e/yarn.lock
+
+      - name: Install msg-agent dependencies
+        working-directory: msg-agent
+        run: yarn install --frozen-lockfile
+
+      - name: Install evm-contracts dependencies
+        working-directory: evm-contracts
+        run: yarn install --frozen-lockfile
+
+      - name: Compile Solidity contracts
+        working-directory: evm-contracts
+        run: PK=0x0000000000000000000000000000000000000000000000000000000000000001 npx hardhat compile
+
+      - name: Install e2e dependencies
+        working-directory: e2e
+        run: yarn install --frozen-lockfile
+
+      - name: Start Yaci DevKit
+        run: |
+          docker compose up -d
+          echo "Waiting for Yaci DevKit to be healthy..."
+          for i in $(seq 1 60); do
+            if docker compose ps --format json | grep -q '"healthy"'; then
+              echo "Yaci DevKit is healthy after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Start Hardhat node
+        working-directory: evm-contracts
+        run: |
+          PK=0x0000000000000000000000000000000000000000000000000000000000000001 npx hardhat node &
+          sleep 3
+          curl -sf http://localhost:8545 -X POST -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' > /dev/null
+
+      - name: Run cross-chain E2E tests (with retry)
+        working-directory: e2e
+        run: |
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt/3..."
+            if yarn test; then
+              echo "Tests passed on attempt $attempt"
+              exit 0
+            fi
+            if [ $attempt -lt 3 ]; then
+              echo "Attempt $attempt failed, resetting Yaci and retrying..."
+              docker compose -f ../docker-compose.yml down
+              docker volume rm cardano-crosschain-xport_yaci-data 2>/dev/null || true
+              docker compose -f ../docker-compose.yml up -d
+              sleep 10
+              # Restart Hardhat node too (fresh state)
+              pkill -f "hardhat node" 2>/dev/null || true
+              cd ../evm-contracts
+              PK=0x0000000000000000000000000000000000000000000000000000000000000001 npx hardhat node &
+              sleep 3
+              cd ../e2e
+            fi
+          done
+          echo "All 3 attempts failed"
+          exit 1

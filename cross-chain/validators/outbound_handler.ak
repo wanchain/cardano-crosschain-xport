@@ -40,11 +40,12 @@ validator outbound_handler(outbound_policy: PolicyId) {
     expect [Pair(_, _)] =
       output_xport.value |> assets.tokens(outbound_policy) |> dict.to_pairs()
 
+    // burn_quantity is negative (from mint field), so compare absolute values
     (source_contract == output_own_input.address)? && (target_contract == redeemer.remote_contract)? && (cross_msg_data.function_call_data.function_name == "wmbReceiveNonEvm")? && (burn_quantity == -function_args.amount)? && (assets.quantity_of(
       output_own_input.value,
       redeemer.burn_policy,
       redeemer.burn_token_name,
-    ) >= burn_quantity)? && (function_args == beneficiary)?
+    ) >= function_args.amount)? && (function_args == beneficiary)?
   }
 
   else(_) {

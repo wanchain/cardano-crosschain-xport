@@ -1,0 +1,50 @@
+=== Cardano Preprod (cexplorer) ===
+
+InboundMintCheck:
+  https://preprod.cexplorer.io/address/addr_test1wzcv9pd89c3k2za4vmqem5jusqrgshd8r20d428mjgles5gu2chgk
+
+InboundHandler:
+  https://preprod.cexplorer.io/address/addr_test1wrlhn9076ymzxdt05kvja84sk9vhtdpadjlacwlueg8vx4cc24z0j
+
+OutboundHandler:
+  https://preprod.cexplorer.io/address/addr_test1wpxzh4w37f4hk2lq69zz3fmed50utljy7ta4aqucnmdklhcer8w2e
+
+XPort:
+  https://preprod.cexplorer.io/address/addr_test1wrmlfvmndu9xy34eufl3h09fjvmlra7r953s4zpd42n7xqssy8q9r
+
+GroupNFTHolder:
+  https://preprod.cexplorer.io/address/addr_test1wpqgnm4p5wp2wg228d75l6qsfsrnlqhmcaxvwklkatc8tqsjr052a
+
+=== Token Policies (cexplorer) ===
+
+CheckToken:
+  https://preprod.cexplorer.io/policy/37504e1364ec657a4c9d7e833461c82a67abb80df5d504bc587973e2
+
+InboundToken:
+  https://preprod.cexplorer.io/policy/dc18856799d5f48b857f8603ed33db11f20d90d95ad6d25e2f50ae83
+
+OutboundToken:
+  https://preprod.cexplorer.io/policy/30681821e87fe1d0f6365da53ffb775930a780ef6a8595bdcc467c59
+
+BridgeToken:
+  https://preprod.cexplorer.io/policy/6903d28beccd0e9bd5d35d02765cc8c9df504091508cb0a614999fbc
+
+GroupNFT:
+  https://preprod.cexplorer.io/policy/6b1e18ecbc82a40b9c0d59d22ff374722ddc17e30d08865766667fe5
+
+AdminNFT:
+  https://preprod.cexplorer.io/policy/a2a5c7ccfe3b6e2cbac42269dbb932f7429310b6a686abd37ec7fb65
+
+=== EVM Wanchain Testnet ===
+
+TokenHome:
+  https://testnet.wanscan.org/address/0x5b7E38C4c317D8054e328A1DE679c3Fd91E758c0
+
+XToken:
+  https://testnet.wanscan.org/address/0x5745e9BcCF4843beD25f871B4Bbe1f2AE54e2B73
+
+WmbGateway (Wanchain's):
+  https://testnet.wanscan.org/address/0xDDddd58428706FEdD013b3A761c6E40723a7911d
+
+Outbound test tx:
+  https://testnet.wanscan.org/tx/0x491e9b66f9d5dee4f46217062aa16fe5b79048eb9f93d4a2598d7f2e772e6d54

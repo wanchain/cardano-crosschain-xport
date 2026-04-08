@@ -23,10 +23,11 @@ dotenv.config({ path: path.join(__dirname, '../', '.env') });
 
 import {
     BlockfrostProvider, MeshWallet, MeshTxBuilder, Transaction,
-    ForgeScript, applyParamsToScript, resolveScriptHash,
+    ForgeScript, applyParamsToScript, resolveScriptHash, resolvePaymentKeyHash,
     resolvePlutusScriptAddress, deserializeAddress, PlutusScript, serializeData,
+    resolveNativeScriptHash, serializeNativeScript,
 } from '@meshsdk/core';
-import { mConStr0 } from '@meshsdk/common';
+import { mConStr0, type NativeScript } from '@meshsdk/common';
 import { defaultConfig } from '../src/config';
 
 const OUTBOUND_TOKEN_NAME = defaultConfig.OUTBOUND_TOKEN_NAME;
@@ -66,9 +67,34 @@ async function main() {
         if (!collateral) throw new Error('Collateral creation timed out');
     }
 
-    // ── Step 1: Mint AdminNFT (native script for testing) ──────────────────
+    // ── Step 1: Mint AdminNFT ──────────────────────────────────────────────
+    //
+    // Supports multisig via env vars:
+    //   ADMIN_SIGNERS=addr1,addr2,addr3   (comma-separated bech32 addresses)
+    //   ADMIN_THRESHOLD=2                 (m-of-n required signatures)
+    //
+    // If ADMIN_SIGNERS is not set, falls back to single-signer (deployer wallet).
     console.log('--- Step 1: Mint AdminNFT ---');
-    const adminForgingScript = ForgeScript.withOneSignature(walletAddr);
+
+    const adminSignersEnv = process.env.ADMIN_SIGNERS;
+    const adminThreshold = parseInt(process.env.ADMIN_THRESHOLD || '1');
+    let adminForgingScript: string;
+
+    if (adminSignersEnv) {
+        const signerAddrs = adminSignersEnv.split(',').map(s => s.trim());
+        const signerKeyHashes = signerAddrs.map(addr => resolvePaymentKeyHash(addr));
+        const nativeScript: NativeScript = adminThreshold >= signerKeyHashes.length
+            ? { type: 'all', scripts: signerKeyHashes.map(kh => ({ type: 'sig', keyHash: kh })) }
+            : { type: 'atLeast', required: adminThreshold, scripts: signerKeyHashes.map(kh => ({ type: 'sig', keyHash: kh })) };
+        const { scriptCbor } = serializeNativeScript(nativeScript);
+        adminForgingScript = scriptCbor!;
+        console.log(`  AdminNFT multisig: ${adminThreshold}-of-${signerKeyHashes.length}`);
+        signerKeyHashes.forEach((kh, i) => console.log(`    signer ${i}: ${kh}`));
+    } else {
+        adminForgingScript = ForgeScript.withOneSignature(walletAddr);
+        console.log('  AdminNFT: single-signer (deployer wallet)');
+    }
+
     const adminNftSymbol = resolveScriptHash(adminForgingScript);
     // mintAsset hex-encodes the assetName, so pass raw string
     const adminNftName = 'AdminNFT';

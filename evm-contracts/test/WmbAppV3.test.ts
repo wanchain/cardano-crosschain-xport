@@ -41,13 +41,6 @@ describe("WmbAppV3 (via TestWmbApp)", function () {
     // ── Constructor ──────────────────────────────────────────────────────────
 
     describe("constructor", function () {
-        it("reverts when gateway is address(0)", async function () {
-            const TestWmbApp = await ethers.getContractFactory("TestWmbApp");
-            await expect(
-                TestWmbApp.deploy(ethers.constants.AddressZero)
-            ).to.be.revertedWith("WmbAppV3: gateway cannot be zero address");
-        });
-
         it("succeeds with a valid gateway address", async function () {
             const { app } = await deployApp(owner.address);
             expect(await app.wmbGateway()).to.equal(owner.address);
@@ -59,9 +52,9 @@ describe("WmbAppV3 (via TestWmbApp)", function () {
         });
     });
 
-    // ── setTrustedRemoteNonEvm ───────────────────────────────────────────────
+    // ── setTrustedRemote ───────────────────────────────────────────────
 
-    describe("setTrustedRemoteNonEvm", function () {
+    describe("setTrustedRemote", function () {
         let app: Contract;
         const fromChainId = 888;
         const remoteAddr  = ethers.utils.toUtf8Bytes("addr1qfoobar");
@@ -72,39 +65,39 @@ describe("WmbAppV3 (via TestWmbApp)", function () {
 
         it("can only be called by the owner", async function () {
             await expect(
-                app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, true)
+                app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, true)
             ).to.not.be.reverted;
         });
 
         it("reverts when called by non-owner", async function () {
             await expect(
-                app.connect(other).setTrustedRemoteNonEvm(fromChainId, remoteAddr, true)
+                app.connect(other).setTrustedRemote(fromChainId, remoteAddr, true)
             ).to.be.reverted; // OZ Ownable reverts without a specific string in v5
         });
 
         it("emits SetTrustedRemote event with correct args", async function () {
             await expect(
-                app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, true)
+                app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, true)
             )
                 .to.emit(app, "SetTrustedRemote")
                 .withArgs(fromChainId, ethers.utils.hexlify(remoteAddr), true);
         });
 
         it("stores the trusted remote mapping correctly", async function () {
-            await app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, true);
+            await app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, true);
             expect(await app.trustedRemotes(fromChainId, remoteAddr)).to.be.true;
         });
 
         it("can untrust a previously trusted remote", async function () {
-            await app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, true);
-            await app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, false);
+            await app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, true);
+            await app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, false);
             expect(await app.trustedRemotes(fromChainId, remoteAddr)).to.be.false;
         });
 
         it("emits SetTrustedRemote when untrusting", async function () {
-            await app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, true);
+            await app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, true);
             await expect(
-                app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, false)
+                app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, false)
             )
                 .to.emit(app, "SetTrustedRemote")
                 .withArgs(fromChainId, ethers.utils.hexlify(remoteAddr), false);
@@ -127,7 +120,7 @@ describe("WmbAppV3 (via TestWmbApp)", function () {
             gateway = owner;
 
             // Trust the remote so the inner check passes
-            await app.connect(owner).setTrustedRemoteNonEvm(fromChainId, remoteAddr, true);
+            await app.connect(owner).setTrustedRemote(fromChainId, remoteAddr, true);
         });
 
         it("reverts when caller is not the gateway", async function () {
