@@ -33,7 +33,7 @@ use cross_chain/utils.{get_group_info, is_single_asset}
 ///   4. checkOutput    — output at target with CrossMsgData datum; single mint_policy asset
 ///   5. mintValue      — exactly 1 mint_policy token minted with name == target VH bytes
 ///   6. checkTtl       — proof_data.ttl + 1 > tx validity range upper bound
-/// Sum a token across all outputs (mirrors Haskell valueProduced + valueOf).
+/// Sum a token quantity across all outputs.
 fn value_produced(tx: Transaction, cs: PolicyId, tn: ByteArray) -> Int {
   list.foldl(tx.outputs, 0, fn(o, acc) { acc + quantity_of(o.value, cs, tn) })
 }
@@ -124,8 +124,7 @@ fn mint_spend_check(
       },
     )
 
-  // Mirrors Haskell getAmountOfCheckTokeninOwnOutput:
-  // sum check tokens at stk, and assert single-asset per the isSingleAsset check
+  // Sum check tokens at stk_vh and assert single-asset per output.
   let (check_token_amount_at_stk, all_single_asset) =
     list.foldl(
       outputs_at_stk,
@@ -199,9 +198,7 @@ fn mint_spend_check(
   let mint_ok = mint_value == 1
 
   // ── 6. checkTtl ──────────────────────────────────────────────────────────
-  // Haskell: (POSIXTime (ttl + 1)) `after` txInfoValidRange
-  // `after t range` means t is strictly after the upper bound of range,
-  // i.e. range.upper.bound < t, i.e. ttl + 1 > upper_bound
+  // ttl + 1 must be strictly after the tx validity range upper bound.
   let check_ttl =
     when tx.validity_range.upper_bound.bound_type is {
       Finite(upper) -> proof_data.ttl + 1 > upper
@@ -231,8 +228,6 @@ validator inbound_mint_check(param: InboundMintCheckInfo) {
   }
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
-//
 // The burn path (`burn_token_check`) is tested directly — it is a plain
 // function and does not need any crypto primitives.
 //
@@ -246,8 +241,6 @@ validator inbound_mint_check(param: InboundMintCheckInfo) {
 // unit tests that live inside the validator source.  The mint/spend path is
 // therefore covered only by integration/property tests that supply real
 // proof fixtures.
-
-// ── test constants ────────────────────────────────────────────────────────────
 
 const admin_policy: ByteArray =
   #"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -267,8 +260,6 @@ const check_name: ByteArray = #"436865636b546f6b656e"
 // The mint_policy field — the inbound token minting policy
 const mint_policy: ByteArray =
   #"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-
-// ── test helpers ──────────────────────────────────────────────────────────────
 
 fn base_tx() -> Transaction {
   Transaction {
@@ -339,15 +330,11 @@ fn admin_nft_input() -> Input {
   }
 }
 
-// ── test: burn path — AdminNFT present, zero check tokens in outputs → ok ─────
-
 test test_burn_path_succeeds() {
   // No check-token outputs, admin NFT in inputs
   let tx = Transaction { ..base_tx(), inputs: [admin_nft_input()], outputs: [] }
   burn_token_check(inbound_param(), tx)
 }
-
-// ── test: burn path — AdminNFT absent → rejected ──────────────────────────────
 
 test test_burn_fails_without_admin() {
   // Input has ADA only — no AdminNFT
@@ -375,8 +362,6 @@ test test_burn_fails_without_admin() {
   !burn_token_check(inbound_param(), tx)
 }
 
-// ── test: burn path — check token leaks to an output → rejected ───────────────
-
 test test_burn_fails_with_check_token_in_output() {
   // AdminNFT is present but a check token escapes to an output
   let check_output =
@@ -402,8 +387,6 @@ test test_burn_fails_with_check_token_in_output() {
     }
   !burn_token_check(inbound_param(), tx)
 }
-
-// ── test: burn path — two outputs each carry 1 check token → rejected ─────────
 
 test test_burn_multiple_check_tokens_in_outputs() {
   // Two distinct outputs each containing 1 check token.
@@ -448,8 +431,6 @@ test test_burn_multiple_check_tokens_in_outputs() {
   !burn_token_check(inbound_param(), tx)
 }
 
-// ── test: burn path — AdminNFT input has qty=2 → rejected ────────────────────
-
 test test_burn_admin_nft_qty_two() {
   // Input carries qty=2 AdminNFT tokens.
   // has_admin_nft_in_input checks == 1, so it evaluates to False.
@@ -476,7 +457,7 @@ test test_burn_admin_nft_qty_two() {
   // qty == 2, not 1 → has_admin_nft_in_input is False → must reject.
   !burn_token_check(inbound_param(), tx)
 }
-// ── NOTE: mint/spend path tests (InboundCheckRedeemer) ───────────────────────
+// mint/spend path tests (InboundCheckRedeemer):
 //
 // `mint_spend_check` calls `builtin.verify_ecdsa_secp256k1_signature`,
 // `builtin.verify_schnorr_secp256k1_signature`, and

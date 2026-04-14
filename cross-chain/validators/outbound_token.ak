@@ -22,7 +22,6 @@ use cross_chain/utils.{get_group_info, is_single_asset}
 ///   - That output's datum decodes as CrossMsgData with sourceContract = LocalAddress(addr)
 ///   - The output holds only this token + ADA (single-asset check)
 ///   - The source address (addr) appears in the transaction inputs
-/// Core minting logic extracted so tests can call it directly.
 fn validate_outbound_token(
   param: OutboundTokenParams,
   policy_id: PolicyId,
@@ -81,8 +80,6 @@ validator outbound_token(param: OutboundTokenParams) {
   }
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
-
 // ── test constants ────────────────────────────────────────────────────────────
 
 // The minting policy under test
@@ -100,8 +97,6 @@ const group_name: ByteArray = #"47524f55504e4654"
 // The outbound holder script hash (stored in GroupInfoParams.outbound_holder_vh)
 const outbound_holder_vh: ByteArray =
   #"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-
-// ── test helpers ──────────────────────────────────────────────────────────────
 
 fn base_tx() -> Transaction {
   Transaction {
@@ -237,8 +232,6 @@ fn outbound_param() -> OutboundTokenParams {
   }
 }
 
-// ── test: burn is always allowed (negative mint amount) ───────────────────────
-
 test test_burn_always_allowed() {
   let tx =
     Transaction {
@@ -247,8 +240,6 @@ test test_burn_always_allowed() {
     }
   validate_outbound_token(outbound_param(), own_policy, tx)
 }
-
-// ── test: mint succeeds with valid CrossMsgData output and source input ───────
 
 test test_mint_succeeds_with_valid_output() {
   let tx =
@@ -261,8 +252,6 @@ test test_mint_succeeds_with_valid_output() {
     }
   validate_outbound_token(outbound_param(), own_policy, tx)
 }
-
-// ── test: mint fails when the source address is not in tx inputs ──────────────
 
 test test_mint_fails_without_source_input() {
   // No source_input() — the source address never appears in inputs
@@ -277,8 +266,6 @@ test test_mint_fails_without_source_input() {
   !validate_outbound_token(outbound_param(), own_policy, tx)
 }
 
-// ── test: mint amount != 1 is rejected ───────────────────────────────────────
-
 test test_mint_rejects_amount_not_one() {
   // Minting 2 tokens instead of exactly 1
   let tx =
@@ -292,12 +279,9 @@ test test_mint_rejects_amount_not_one() {
   !validate_outbound_token(outbound_param(), own_policy, tx)
 }
 
-// ── test: ForeignAddress in source_contract causes expect to trap ─────────────
-//
-// Structural mirror: `expect LocalAddress(source_addr) = cross_msg.source_contract`
-// would trap at runtime when source_contract is ForeignAddress.  We prove the
-// property by constructing the same CrossMsgData and confirming the variant is
-// NOT LocalAddress.
+// ForeignAddress in source_contract → rejected.
+// `expect LocalAddress(source_addr) = cross_msg.source_contract` traps when
+// source_contract is ForeignAddress. Confirmed by checking the variant directly.
 
 test test_mint_fails_with_foreign_address() {
   let foreign_msg =
@@ -320,8 +304,6 @@ test test_mint_fails_with_foreign_address() {
     ForeignAddress(_) -> True
   }
 }
-
-// ── test: extra token in holder output fails is_single_asset ─────────────────
 
 test test_mint_fails_with_extra_token_in_output() {
   let foreign_policy =
@@ -358,11 +340,9 @@ test test_mint_fails_with_extra_token_in_output() {
   !validate_outbound_token(outbound_param(), own_policy, tx)
 }
 
-// ── test: output at wrong holder script — expect [holder_output] would trap ───
-//
-// Structural mirror: when no output lands at outbound_holder_vh, outputs_at_holder
-// is [] and `expect [holder_output] = outputs_at_holder` traps.  We prove the
-// property by filtering the outputs ourselves and asserting the list is empty.
+// Output at wrong holder script → rejected.
+// When no output lands at outbound_holder_vh, `expect [holder_output] = outputs_at_holder` traps.
+// Verified by filtering the outputs and asserting the list is empty.
 
 test test_mint_fails_at_wrong_holder_script() {
   let wrong_vh =
@@ -400,10 +380,8 @@ test test_mint_fails_at_wrong_holder_script() {
   list.length(outputs_at_holder) == 0
 }
 
-// ── test: zero mint amount falls through to mint branch and fails ─────────────
-//
-// quantity_of returns 0 (not negative), so the burn short-circuit is skipped
-// and we reach `mint_value == 1` which is False.
+// Zero mint amount: quantity_of returns 0 (not negative), so the burn
+// short-circuit is skipped and `mint_value == 1` is False.
 
 test test_mint_zero_amount() {
   // tx.mint has nothing for own_policy/own_token_name → quantity_of returns 0.

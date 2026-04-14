@@ -37,12 +37,7 @@ fn group_info_params(output: Output) -> GroupInfoParams {
 
 /// Walk both parameter lists element by element.
 /// At most one position may differ, and if it does it must be at index == action.
-/// Mirrors the Haskell paramsDiff exactly:
-///   go [] _           = True    -- old exhausted → ok (both [] [] and [] (new:rn))
-///   go (old:ro) []    = False   -- old list longer → fail
-///   go (old:ro) (new:rn) n =
-///       if old /= new && n /= i then False
-///       else go ro rn (n+1)
+/// old exhausted → ok; old list longer than new → fail.
 fn params_diff(
   old_params: List<ByteArray>,
   new_params: List<ByteArray>,
@@ -58,11 +53,11 @@ fn params_diff_go(
   n: Int,
 ) -> Bool {
   when old_params is {
-    // old list exhausted → ok whether new list has more or not (matches Haskell)
+    // old list exhausted → ok whether new list has more or not
     [] -> True
     [old, ..rest_old] ->
       when new_params is {
-        // old list longer → fail (matches Haskell `go (old:ro) [] _ = False`)
+        // old list longer than new → fail
         [] -> False
         [new, ..rest_new] ->
           if old != new && n != action {
@@ -74,8 +69,7 @@ fn params_diff_go(
   }
 }
 
-/// Convert GroupInfoParams to a flat list of ByteArray in the canonical order
-/// matching the Haskell `params` field order:
+/// Convert GroupInfoParams to a flat list of ByteArray in the canonical field order:
 ///   [version, admin, gpk, balance_worker, treasury_check_vh, oracle_worker,
 ///    mint_check_vh, stk_vh, stake_check_vh, nft_ref_holder_vh,
 ///    nft_treasury_check_vh, nft_mint_check_vh, outbound_holder_vh, inbound_check_vh]
@@ -107,13 +101,11 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
   ) {
     let GroupAdminNFTInfo { group, admin } = param
 
-    // ── own input ────────────────────────────────────────────────────────────
     expect Some(own_input) =
       list.find(tx.inputs, fn(i) { i.output_reference == own_ref })
 
     let own_output_addr = own_input.output.address
 
-    // ── hasAdminNftInInput ───────────────────────────────────────────────────
     let total_input_value =
       list.foldl(
         tx.inputs,
@@ -128,7 +120,6 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
         admin.admin_nft_name,
       ) == 1
 
-    // ── isAuthorized ─────────────────────────────────────────────────────────
     let oracle_worker_pkh = group_info_params(own_input.output).oracle_worker
 
     let is_authorized =
@@ -137,7 +128,6 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
         oracle_worker_pkh,
       )
 
-    // ── inputHasToken ────────────────────────────────────────────────────────
     let input_has_token =
       quantity_of(
         own_input.output.value,
@@ -145,7 +135,6 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
         group.group_nft_name,
       ) > 0
 
-    // ── ownOutput ────────────────────────────────────────────────────────────
     // action > 0 → continuing outputs (same address); action == 0 → any output with GroupNFT
     let own_output =
       if action > 0 {
@@ -165,7 +154,6 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
         o
       }
 
-    // ── outputHasToken ───────────────────────────────────────────────────────
     let out_params = group_info_params(own_output)
     let version_vh = out_params.version
 
@@ -184,7 +172,6 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
 
     let output_has_token = b_single_asset && is_right_owner
 
-    // ── checkNewDatum ────────────────────────────────────────────────────────
     let old_params = params_to_list(group_info_params(own_input.output))
     let new_params = params_to_list(out_params)
 
@@ -198,7 +185,6 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
     let check_new_datum =
       params_diff(old_params, new_params, action) && check_params_len
 
-    // ── combine ──────────────────────────────────────────────────────────────
     is_authorized && input_has_token && output_has_token && check_new_datum
   }
 
@@ -206,13 +192,6 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
     fail
   }
 }
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
-//
-// Validator handler functions are not directly callable from tests, so we
-// re-implement the combined check logic in `validate_group_nft_holder` below.
-// This mirrors the validator body exactly and lets tests call it like a
-// plain function.
 
 // ── test constants ────────────────────────────────────────────────────────────
 
@@ -232,8 +211,6 @@ const version_vh: ByteArray =
 
 const oracle_worker_pkh: ByteArray =
   #"2222222222222222222222222222222222222222222222222222222222222222"
-
-// ── test helpers ──────────────────────────────────────────────────────────────
 
 fn base_tx() -> Transaction {
   Transaction {
@@ -349,10 +326,6 @@ fn admin_nft_input() -> Input {
   }
 }
 
-// ── validate_group_nft_holder: logic extracted for testability ────────────────
-//
-// Mirrors the validator body; called by every test below.
-
 fn validate_group_nft_holder(
   param: GroupAdminNFTInfo,
   action: Int,
@@ -437,8 +410,6 @@ fn validate_group_nft_holder(
   is_authorized && input_has_token && output_has_token && datum_ok
 }
 
-// ── test: admin NFT in inputs, action=1 ──────────────────────────────────────
-
 test test_authorized_with_admin_nft() {
   let ref = oref(0)
   let tx =
@@ -449,8 +420,6 @@ test test_authorized_with_admin_nft() {
     }
   validate_group_nft_holder(validator_param(), 1, ref, tx)
 }
-
-// ── test: oracle worker signs, action=2 (GPK field at index 2 may change) ────
 
 test test_authorized_oracle_worker() {
   let ref = oref(0)
@@ -466,8 +435,6 @@ test test_authorized_oracle_worker() {
   validate_group_nft_holder(validator_param(), 2, ref, tx)
 }
 
-// ── test: no admin NFT and not oracle worker → rejected ───────────────────────
-
 test test_rejects_unauthorized() {
   let ref = oref(0)
   let tx =
@@ -478,8 +445,6 @@ test test_rejects_unauthorized() {
     }
   !validate_group_nft_holder(validator_param(), 1, ref, tx)
 }
-
-// ── test: continuing output must contain only GroupNFT + ADA (no extra tokens) ─
 
 test test_output_has_token() {
   let ref = oref(0)
@@ -510,8 +475,6 @@ test test_output_has_token() {
   !validate_group_nft_holder(validator_param(), 1, ref, tx)
 }
 
-// ── test: exactly one param changed at the action index → allowed ─────────────
-
 test test_param_diff_allows_single_change() {
   // action=1 → index 1 is the `admin` field; changing only that is fine
   let ref = oref(0)
@@ -525,8 +488,6 @@ test test_param_diff_allows_single_change() {
     }
   validate_group_nft_holder(validator_param(), 1, ref, tx)
 }
-
-// ── test: two params changed under action=1 → rejected ───────────────────────
 
 test test_param_diff_rejects_two_changes() {
   // action=1 but both admin (index 1) and gpk (index 2) differ → must fail
@@ -545,8 +506,6 @@ test test_param_diff_rejects_two_changes() {
     }
   !validate_group_nft_holder(validator_param(), 1, ref, tx)
 }
-
-// ── unit tests for params_diff in isolation ───────────────────────────────────
 
 test test_params_diff_identical_lists() {
   let p = params_to_list(base_params())
@@ -569,11 +528,8 @@ test test_params_diff_two_changes_rejected() {
   !params_diff([#"aa", #"bb", #"cc"], [#"11", #"bb", #"22"], 0)
 }
 
-// ── test: action=0 version upgrade happy path ─────────────────────────────────
-//
-// A new version VH is picked; the GroupNFT output goes to the NEW address
-// (keyed by the new version hash). action=0 scans ALL outputs for the GroupNFT
-// rather than filtering by the input address.
+// action=0 version upgrade: GroupNFT output goes to the new version address.
+// action=0 scans ALL outputs for the GroupNFT rather than filtering by the input address.
 
 const new_version_vh: ByteArray =
   #"3333333333333333333333333333333333333333333333333333333333333333"
@@ -608,8 +564,7 @@ test test_action_0_version_upgrade() {
   validate_group_nft_holder(validator_param(), 0, ref, tx)
 }
 
-// ── test: action=0 with oracle worker only (no AdminNFT) → rejected ───────────
-//
+// action=0 with oracle worker only (no AdminNFT) → rejected.
 // Oracle worker auth is only valid for action==2, not action==0.
 
 test test_action_0_rejects_oracle_worker() {
@@ -642,8 +597,7 @@ test test_action_0_rejects_oracle_worker() {
   !validate_group_nft_holder(validator_param(), 0, ref, tx)
 }
 
-// ── test: own input has no GroupNFT → input_has_token fails ───────────────────
-//
+// own input has no GroupNFT → input_has_token fails.
 // The UTxO being spent holds only ADA; GroupNFT is absent.
 
 test test_input_missing_group_nft() {
@@ -668,12 +622,10 @@ test test_input_missing_group_nft() {
   !validate_group_nft_holder(validator_param(), 1, ref, tx)
 }
 
-// ── test: output GroupNFT goes to a script whose hash ≠ version field ─────────
-//
+// output GroupNFT at a script whose hash differs from the datum version field → rejected.
 // is_right_owner checks that Script(payment_credential_hash) == version from the
-// output datum. Here we keep the output address the same as the input (so the
-// action=1 continuing-output filter succeeds), but set the datum's `version`
-// field to a different hash so that `Script(version_vh) != wrong_version_vh`.
+// output datum. Output stays at the input address (so the action=1 continuing-output
+// filter passes), but the datum's `version` field points to a different hash.
 
 test test_output_wrong_owner() {
   let wrong_version_vh =
@@ -702,14 +654,12 @@ test test_output_wrong_owner() {
   !validate_group_nft_holder(validator_param(), 1, ref, tx)
 }
 
-// ── unit tests for params_diff structural edge cases ─────────────────────────
-
-// old exhausted before new → Haskell says True (old list done = ok)
+// old exhausted before new → True (old list done = ok)
 test test_params_diff_old_shorter_than_new() {
   params_diff([#"aa"], [#"aa", #"bb"], 0)
 }
 
-// old list longer than new → Haskell says False
+// old list longer than new → False
 test test_params_diff_old_longer_than_new() {
   !params_diff([#"aa", #"bb"], [#"aa"], 0)
 }

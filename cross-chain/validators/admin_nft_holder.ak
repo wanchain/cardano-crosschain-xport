@@ -33,7 +33,7 @@ fn admin_datum(output: Output) -> AdminDatum {
   d
 }
 
-/// Structural equality for AdminDatum (mirrors Haskell adminDatumEq).
+/// Structural equality for AdminDatum.
 fn admin_datum_eq(a: AdminDatum, b: AdminDatum) -> Bool {
   a.signatories == b.signatories && a.min_num_signatures == b.min_num_signatures
 }
@@ -47,7 +47,6 @@ validator admin_nft_holder(param: AdminNftTokenInfo) {
   ) {
     let AdminNftTokenInfo { admin_nft_symbol, admin_nft_name } = param
 
-    // ── own input ────────────────────────────────────────────────────────────
     expect Some(own_input) =
       list.find(tx.inputs, fn(i) { i.output_reference == own_ref })
 
@@ -57,13 +56,11 @@ validator admin_nft_holder(param: AdminNftTokenInfo) {
         _ -> fail @"own input must be a script"
       }
 
-    // ── helper: AdminNFT quantity in an output ────────────────────────────────
     let admin_nft_value =
       fn(o: Output) -> Int {
         quantity_of(o.value, admin_nft_symbol, admin_nft_name)
       }
 
-    // ── isAuthorized (multi-sig) ──────────────────────────────────────────────
     let datum_in = admin_datum(own_input.output)
 
     let signers_present =
@@ -76,16 +73,13 @@ validator admin_nft_holder(param: AdminNftTokenInfo) {
 
     let is_authorized = signers_present >= datum_in.min_num_signatures
 
-    // ── inputHasAdminNFT ──────────────────────────────────────────────────────
     let input_has_admin_nft = admin_nft_value(own_input.output) == 1
 
-    // ── adminNFTOutput — the unique output that carries the AdminNFT ──────────
     let outputs_with_nft =
       list.filter(tx.outputs, fn(o) { admin_nft_value(o) == 1 })
 
     expect [admin_nft_output] = outputs_with_nft
 
-    // ── checkAdminNFTOwnerInOutput ────────────────────────────────────────────
     let check_admin_nft_owner_in_output =
       when admin_nft_output.address.payment_credential is {
         Script(s) ->
@@ -99,7 +93,6 @@ validator admin_nft_holder(param: AdminNftTokenInfo) {
         _ -> True
       }
 
-    // ── isDatumCorrect ────────────────────────────────────────────────────────
     let is_datum_correct =
       when action is {
         // Use: datum must be identical to the input datum
@@ -124,7 +117,6 @@ validator admin_nft_holder(param: AdminNftTokenInfo) {
           }
       }
 
-    // ── combine ───────────────────────────────────────────────────────────────
     is_authorized && input_has_admin_nft && check_admin_nft_owner_in_output && is_datum_correct
   }
 
@@ -132,11 +124,6 @@ validator admin_nft_holder(param: AdminNftTokenInfo) {
     fail
   }
 }
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
-//
-// Validator handlers are not directly callable, so `validate_admin_nft_holder`
-// below mirrors the body exactly and is used by all tests.
 
 // ── test constants ────────────────────────────────────────────────────────────
 
@@ -161,8 +148,6 @@ const signer_b: ByteArray =
 
 const signer_c: ByteArray =
   #"3333333333333333333333333333333333333333333333333333333333333333"
-
-// ── test helpers ──────────────────────────────────────────────────────────────
 
 fn base_tx() -> Transaction {
   Transaction {
@@ -248,8 +233,6 @@ fn admin_nft_output_other(datum: AdminDatum) -> Output {
   }
 }
 
-// ── validate_admin_nft_holder: logic extracted for testability ────────────────
-
 fn validate_admin_nft_holder(
   param: AdminNftTokenInfo,
   action: AdminActionRedeemer,
@@ -334,8 +317,6 @@ fn two_of_three_datum() -> AdminDatum {
   }
 }
 
-// ── test: 2-of-3 multisig — two signatories present, threshold=2 → ok ─────────
-
 test test_multisig_passes_threshold() {
   let ref = oref(0)
   let datum = two_of_three_datum()
@@ -350,8 +331,6 @@ test test_multisig_passes_threshold() {
   validate_admin_nft_holder(admin_param(), Use, ref, tx)
 }
 
-// ── test: only 1 of 3 signed, threshold=2 → rejected ─────────────────────────
-
 test test_multisig_fails_below_threshold() {
   let ref = oref(0)
   let datum = two_of_three_datum()
@@ -365,8 +344,6 @@ test test_multisig_fails_below_threshold() {
   !validate_admin_nft_holder(admin_param(), Use, ref, tx)
 }
 
-// ── test: Use action preserves the datum unchanged ────────────────────────────
-
 test test_use_preserves_datum() {
   let ref = oref(0)
   let datum = two_of_three_datum()
@@ -379,8 +356,6 @@ test test_use_preserves_datum() {
     }
   validate_admin_nft_holder(admin_param(), Use, ref, tx)
 }
-
-// ── test: Use action with a modified datum → rejected ─────────────────────────
 
 test test_use_rejects_changed_datum() {
   let ref = oref(0)
@@ -401,8 +376,6 @@ test test_use_rejects_changed_datum() {
   !validate_admin_nft_holder(admin_param(), Use, ref, tx)
 }
 
-// ── test: Update action with a new valid datum → accepted ─────────────────────
-
 test test_update_allows_new_datum() {
   let ref = oref(0)
   let datum_in = two_of_three_datum()
@@ -419,8 +392,6 @@ test test_update_allows_new_datum() {
   validate_admin_nft_holder(admin_param(), Update, ref, tx)
 }
 
-// ── test: Upgrade action — NFT must move to a different script ────────────────
-
 test test_upgrade_requires_different_script() {
   let ref = oref(0)
   let datum = two_of_three_datum()
@@ -435,8 +406,6 @@ test test_upgrade_requires_different_script() {
   validate_admin_nft_holder(admin_param(), Upgrade, ref, tx)
 }
 
-// ── test: Upgrade action — NFT staying at own script → rejected ───────────────
-
 test test_upgrade_rejects_same_script() {
   let ref = oref(0)
   let datum = two_of_three_datum()
@@ -450,8 +419,6 @@ test test_upgrade_rejects_same_script() {
     }
   !validate_admin_nft_holder(admin_param(), Upgrade, ref, tx)
 }
-
-// ── helper: PubKey address for pubkey output tests ────────────────────────────
 
 fn pubkey_addr() -> Address {
   Address {
@@ -474,8 +441,7 @@ fn admin_nft_output_pubkey(datum: AdminDatum) -> Output {
   }
 }
 
-// ── test: Use action — AdminNFT output goes to a PubKey address → accepted ────
-//
+// Use action — AdminNFT output goes to a PubKey address → accepted.
 // PubKey is always valid for any action; datum must still be identical for Use.
 
 test test_use_to_pubkey_output() {
@@ -491,8 +457,7 @@ test test_use_to_pubkey_output() {
   validate_admin_nft_holder(admin_param(), Use, ref, tx)
 }
 
-// ── test: Update action — AdminNFT output goes to a PubKey address → accepted ─
-//
+// Update action — AdminNFT output goes to a PubKey address → accepted.
 // PubKey short-circuits check_owner; datum just needs to be structurally valid.
 
 test test_update_to_pubkey_output() {
@@ -510,9 +475,8 @@ test test_update_to_pubkey_output() {
   validate_admin_nft_holder(admin_param(), Update, ref, tx)
 }
 
-// ── test: Upgrade action — AdminNFT output goes to a PubKey address → accepted ─
-//
-// Upgrade to PubKey: check_owner returns True (PubKey branch); datum unconstrained.
+// Upgrade action — AdminNFT output goes to a PubKey address → accepted.
+// check_owner returns True (PubKey branch); datum unconstrained.
 
 test test_upgrade_to_pubkey_output() {
   let ref = oref(0)
@@ -527,8 +491,7 @@ test test_upgrade_to_pubkey_output() {
   validate_admin_nft_holder(admin_param(), Upgrade, ref, tx)
 }
 
-// ── test: Update action — new datum has min_num_signatures=0 → rejected ───────
-//
+// Update action — new datum has min_num_signatures=0 → rejected.
 // `min > 0` is enforced in the Update datum check.
 
 test test_update_rejects_zero_threshold() {
@@ -550,8 +513,7 @@ test test_update_rejects_zero_threshold() {
   !validate_admin_nft_holder(admin_param(), Update, ref, tx)
 }
 
-// ── test: Update action — threshold exceeds signatory count → rejected ─────────
-//
+// Update action — threshold exceeds signatory count → rejected.
 // `length(signatories) >= min` is enforced: 1 signatory but min=2 must fail.
 
 test test_update_rejects_threshold_exceeds_signatories() {
@@ -569,10 +531,8 @@ test test_update_rejects_threshold_exceeds_signatories() {
   !validate_admin_nft_holder(admin_param(), Update, ref, tx)
 }
 
-// ── test: own input has no AdminNFT → input_has_admin_nft fails ───────────────
-//
-// The own input holds only ADA. The AdminNFT happens to be in a different input,
-// but input_has_admin_nft checks the OWN input specifically (nft_qty(own_input.output) == 1).
+// own input has no AdminNFT → input_has_admin_nft fails.
+// The AdminNFT may be in another input, but the check is specifically against the own input.
 
 test test_input_missing_admin_nft() {
   let ref = oref(0)
@@ -612,8 +572,6 @@ test test_input_missing_admin_nft() {
     }
   !validate_admin_nft_holder(admin_param(), Use, ref, tx)
 }
-
-// ── test: 3-of-3 multisig — all three sign, threshold exactly met → accepted ──
 
 test test_threshold_exactly_met() {
   let ref = oref(0)
