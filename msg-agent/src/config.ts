@@ -18,7 +18,6 @@ export interface Config {
     inboundToken?: Validator;
     outboundToken?: Validator;
     // Production cross-chain validators (Aiken V3)
-    groupNft?: Validator;
     groupNftHolder?: Validator;
     adminNftHolder?: Validator;
     checkToken?: Validator;
@@ -41,9 +40,9 @@ export const defaultConfig: Config = {
     NETWORK: parseInt(process.env.NETWORK || '0'), // 0 testnet 1 mainnet
     EvmContractADDRESS: (process.env.EVM_CONTRACT_ADDRESS || '0xd6Ed4F1F50Cae0c5c7F514F3D0B1220c4a78F71d').toLowerCase(),
     demoTokenName:  Buffer.from('DemoToken','ascii').toString('hex'),
-    demoInbound: loadCrossChainComp('inbound_handler.inbound_handler.spend'),
-    demoOutbound: loadCrossChainComp('outbound_handler.outbound_handler.spend'),
-    demoToken: loadCrossChainComp('bridge_token.bridge_token.mint'),
+    demoInbound: loadCrossChainComp('demo/inbound_handler.inbound_handler.spend'),
+    demoOutbound: loadCrossChainComp('demo/outbound_handler.outbound_handler.spend'),
+    demoToken: loadCrossChainComp('demo/bridge_token.bridge_token.mint'),
 
     // Inbound token: LOCAL_INBOUND_TOKEN override → cross-chain Aiken V3 → (no fallback)
     inboundToken: process.env.LOCAL_INBOUND_TOKEN
@@ -56,7 +55,6 @@ export const defaultConfig: Config = {
         : loadCrossChainComp('outbound_token.outbound_token.mint'),
 
     // Production cross-chain validators (Aiken V3)
-    groupNft: loadCrossChainComp('group_nft.group_nft.mint'),
     groupNftHolder: loadCrossChainComp('group_nft_holder.group_nft_holder.spend'),
     adminNftHolder: loadCrossChainComp('admin_nft_holder.admin_nft_holder.spend'),
     checkToken: loadCrossChainComp('check_token.check_token.mint'),

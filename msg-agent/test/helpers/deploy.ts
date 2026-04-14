@@ -5,7 +5,7 @@
  * GroupNFTHolder UTxO, sets the GPK, updates stk_vh, and mints check tokens.
  *
  * Extracted from:
- *   - scripts/deploy-prod-validators.ts
+ *   - scripts/deploy-xport.ts
  *   - scripts/update-gpk.ts
  *   - scripts/mint-check-tokens.ts
  */
@@ -68,7 +68,7 @@ export interface DeploymentResult {
  *
  * Steps:
  *   1. Mint AdminNFT (ForgeScript, native script)
- *   2. Mint GroupNFT (one-shot Plutus V3)
+ *   2. GroupNFT policy (ForgeScript — same policy as AdminNFT, different token name)
  *   3. Compute ALL parameterized validator hashes
  *   4. Create GroupNFTHolder UTxO with GroupInfoParams datum
  *   5. Generate Ed25519 keypair, update GPK (action=2)
@@ -124,17 +124,10 @@ export async function deployAll(
     await waitForTx(walletAddr, adminTxHash);
     await sleep(3000);
 
-    // ── Step 2: Mint GroupNFT (one-shot) ─────────────────────────────────────
-    console.log('[deploy] Step 2: Mint GroupNFT');
-    const utxos = await wallet.getUtxos();
-    const seedUtxo = utxos[0];
-    if (!seedUtxo) throw new Error('No UTxOs available for GroupNFT mint');
-
-    const orefParam = mConStr0([seedUtxo.input.txHash, seedUtxo.input.outputIndex]);
-
-    if (!defaultConfig.groupNft) throw new Error('groupNft validator not configured');
-    const groupNftCbor = applyParamsToScript(defaultConfig.groupNft.compiledCode, [orefParam]);
-    const groupNftSymbol = resolveScriptHash(groupNftCbor, defaultConfig.groupNft.plutusVersion);
+    // ── Step 2: GroupNFT policy (ForgeScript) ────────────────────────────────
+    console.log('[deploy] Step 2: GroupNFT policy (ForgeScript)');
+    // In production, GroupNFT is minted by asset crosschain. For testing, native script suffices.
+    const groupNftSymbol = adminNftSymbol; // same policy, different asset name
     const groupNftName = Buffer.from('GroupInfoTokenCoin', 'ascii').toString('hex');
 
     // ── Step 3: Compute all parameterized validator hashes ───────────────────
@@ -263,39 +256,18 @@ export async function deployAll(
         inboundMintCheckHash,   // [13] inbound_check_vh
     ]);
 
-    const freshUtxos = await wallet.getUtxos();
-    const collateral = await getCollateralUtxo(wallet);
-    const changeAddress = await wallet.getChangeAddress();
-
-    // Filter out UTxOs containing AdminNFT from selectUtxosFrom
     const adminNftUnit = adminNftSymbol + adminNftName;
-    const utxosWithoutAdmin = freshUtxos.filter(
-        (u) => !u.output.amount.some((a: { unit: string }) => a.unit === adminNftUnit),
-    );
 
-    const groupMintBuilder = new MeshTxBuilder({ fetcher: provider, submitter: provider });
-    await groupMintBuilder
-        .txIn(seedUtxo.input.txHash, seedUtxo.input.outputIndex, seedUtxo.output.amount, seedUtxo.output.address)
-        .mintPlutusScript(defaultConfig.groupNft.plutusVersion)
-        .mint('1', groupNftSymbol, groupNftName)
-        .mintingScript(groupNftCbor)
-        .mintRedeemerValue(mConStr0([]), undefined, PLUTUS_BUDGET)
-        .txOut(groupNftHolderAddress, [
-            { unit: groupNftSymbol + groupNftName, quantity: '1' },
-            { unit: 'lovelace', quantity: '5000000' },
-        ])
-        .txOutInlineDatumValue(groupInfoParams)
-        .txInCollateral(
-            collateral.input.txHash,
-            collateral.input.outputIndex,
-            collateral.output.amount,
-            collateral.output.address,
-        )
-        .changeAddress(changeAddress)
-        .selectUtxosFrom(utxosWithoutAdmin)
-        .complete();
-
-    const groupUnsigned = groupMintBuilder.txHex;
+    const groupMintTx = new Transaction({ initiator: wallet });
+    groupMintTx.mintAsset(adminForgingScript, {
+        assetName: 'GroupInfoTokenCoin',
+        assetQuantity: '1',
+        recipient: {
+            address: groupNftHolderAddress,
+            datum: { value: groupInfoParams, inline: true },
+        },
+    });
+    const groupUnsigned = await groupMintTx.build();
     const groupSigned = await wallet.signTx(groupUnsigned);
     const groupTxHash = await submitTx(groupSigned);
     console.log(`  GroupNFT + holder created: ${groupTxHash}`);

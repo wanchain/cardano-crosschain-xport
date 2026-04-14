@@ -33,7 +33,7 @@ import { mConStr0 } from '@meshsdk/common';
 import { defaultConfig } from '../src/config';
 
 // ── Known deployment values ─────────────────────────────────────────────────
-// AdminNFT minted during deploy-prod-validators (native script, in deployer wallet)
+// AdminNFT from asset crosschain deployment (must be in deployer wallet)
 const ADMIN_NFT_SYMBOL = process.env.ADMIN_NFT_SYMBOL
     || 'a2a5c7ccfe3b6e2cbac42269dbb932f7429310b6a686abd37ec7fb65';
 const ADMIN_NFT_NAME = process.env.ADMIN_NFT_NAME

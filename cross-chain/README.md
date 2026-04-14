@@ -1,6 +1,6 @@
 # cross-chain
 
-Aiken V3 validators for the Cardano side of the Wanchain cross-chain bridge. These validators handle governance, inbound/outbound message passing, replay prevention, and token minting/burning for cross-chain operations between Cardano and EVM chains.
+Aiken V3 validators for the Cardano side of the Wanchain cross-chain bridge. These validators handle governance, inbound/outbound message passing, replay prevention, and token minting/burning for cross-chain operations between Cardano and EVM chains. GroupNFT and AdminNFT are external dependencies shared with the asset crosschain protocol; only the core protocol and application validators are compiled here.
 
 ## Validators
 
@@ -8,7 +8,6 @@ Aiken V3 validators for the Cardano side of the Wanchain cross-chain bridge. The
 
 | Validator | Type | Parameter | Purpose |
 |-----------|------|-----------|---------|
-| **group_nft** | Minting | `OutputReference` | One-shot NFT mint. Consumes a specific UTxO to guarantee uniqueness. |
 | **group_nft_holder** | Spending | `GroupAdminNFTInfo` | Guards the GroupNFT UTxO that stores `GroupInfoParams` (GPK, oracle worker, validator hashes, etc.). Updates require AdminNFT or oracle worker signature. |
 | **admin_nft_holder** | Spending | `AdminNftTokenInfo` | Guards the AdminNFT UTxO that stores `AdminDatum` (signatories + threshold). Enforces m-of-n multi-sig for Use/Update/Upgrade actions. |
 | **check_token** | Minting | `CheckTokenParam` | Mints permission tokens (e.g. InboundCheckToken). Requires AdminNFT; minted tokens must land at the target validator specified in `GroupInfoParams`. |
@@ -17,9 +16,9 @@ Aiken V3 validators for the Cardano side of the Wanchain cross-chain bridge. The
 | **outbound_token** | Minting | `OutboundTokenParams` | Mints outbound tokens representing a cross-chain message departure. Requires exactly 1 token sent to the outbound holder script with a `CrossMsgData` datum. The source address must appear in tx inputs. |
 | **xport** | Spending | `KeyParam` | Cross-chain gateway. Holds outbound tokens with their message datums. Spending requires a signature from the configured verification key. |
 
-### Application validators
+### Application validators (in `validators/demo/`)
 
-These validators implement the bridge token application (previously in the deleted `msg-demo/` directory). They are parameterized at deployment time and work with the core protocol validators above.
+These validators implement the bridge token application. They are located in the `demo/` subdirectory and are parameterized at deployment time, working with the core protocol validators above.
 
 | Validator | Type | Parameter | Purpose |
 |-----------|------|-----------|---------|
@@ -29,12 +28,11 @@ These validators implement the bridge token application (previously in the delet
 
 ## Validator parameterization chain
 
-Validators are parameterized at deployment time. The dependency graph determines the order they must be compiled and applied:
+Validators are parameterized at deployment time. The dependency graph determines the order they must be compiled and applied. GroupNFT and AdminNFT are external dependencies provided at deployment time.
 
 ```
-group_nft(OutputReference)
-    |
-    v
+# External: group_nft_symbol and admin_nft_symbol provided at deployment
+
 group_nft_holder(GroupAdminNFTInfo)  <-- references group_nft + admin_nft policy IDs
     |
     v
@@ -51,10 +49,10 @@ inbound_token(CheckTokenInfo)        <-- references check_token policy ID
 outbound_token(OutboundTokenParams)  <-- references group_nft + token name
 xport(KeyParam)                      <-- references a verification key hash
 
-Application layer:
-inbound_handler(PolicyId)            <-- inbound_token policy ID
-outbound_handler(PolicyId)           <-- outbound_token policy ID
-bridge_token(ScriptHash, AssetName)  <-- owner script hash (inbound_handler or outbound_handler)
+Application layer (in demo/ subdirectory):
+demo/inbound_handler(PolicyId)       <-- inbound_token policy ID
+demo/outbound_handler(PolicyId)      <-- outbound_token policy ID
+demo/bridge_token(ScriptHash, AssetName) <-- owner script hash (inbound_handler or outbound_handler)
 ```
 
 ## Shared types and utilities
@@ -86,8 +84,8 @@ Unit tests live alongside validators in `*.test.ak` files and inline `test` bloc
 
 `plutus.json` is the compiled CIP-57 blueprint produced by `aiken build`. It is committed to the repository because the **msg-agent** reads it at runtime to:
 
-1. Look up validator CBOR hex by title (e.g. `group_nft.group_nft.mint`)
+1. Look up validator CBOR hex by title (e.g. `group_nft_holder.group_nft_holder.spend`)
 2. Apply parameters (UTxO refs, policy IDs, script hashes) to produce final on-chain scripts
 3. Compute policy IDs and script addresses for transaction building
 
-The file contains 11 validators (22 entries counting the `else` fallback handlers). Any change to validator source requires re-running `aiken build` and committing the updated `plutus.json`.
+The file contains 10 validators (20 entries counting the `else` fallback handlers). Any change to validator source requires re-running `aiken build` and committing the updated `plutus.json`.

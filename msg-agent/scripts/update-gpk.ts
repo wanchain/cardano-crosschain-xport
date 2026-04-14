@@ -35,7 +35,7 @@ import {
 import { mConStr0 } from '@meshsdk/common';
 import { defaultConfig } from '../src/config';
 
-// Known production values from deploy-prod-validators.ts output
+// Known production values from deploy-xport.ts output
 const GROUP_NFT_SYMBOL = process.env.GROUP_NFT_SYMBOL || '9e8b43e9bdfe2f9fd10a8b43899b14e95660598a4f0ad635fa2e7c36';
 const GROUP_NFT_NAME = process.env.GROUP_NFT_NAME || '47726f7570496e666f546f6b656e436f696e';
 const ADMIN_NFT_SYMBOL = process.env.ADMIN_NFT_SYMBOL || 'a2a5c7ccfe3b6e2cbac42269dbb932f7429310b6a686abd37ec7fb65';

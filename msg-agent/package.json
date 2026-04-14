@@ -13,7 +13,7 @@
     "deploy:local": "ts-node scripts/deploy-and-generate-env.ts",
     "test:local": "ts-node scripts/test-local.ts",
     "setup:preprod": "ts-node scripts/setup-preprod.ts",
-    "deploy:prod": "ts-node scripts/deploy-prod-validators.ts",
+    "deploy:prod": "ts-node scripts/deploy-xport.ts",
     "update:gpk": "ts-node scripts/update-gpk.ts",
     "mint:check-tokens": "ts-node scripts/mint-check-tokens.ts",
     "test:local:check": "ts-node scripts/test-local.ts check",

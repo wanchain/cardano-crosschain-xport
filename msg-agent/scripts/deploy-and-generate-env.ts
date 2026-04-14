@@ -163,7 +163,7 @@ ACCOUNT_SEED3=<seed3>
 # Network
 NETWORK=0
 
-# GroupNFTHolder address (set after running deploy-prod-validators.ts)
+# GroupNFTHolder address (set after running deploy-xport.ts)
 GROUP_NFT_HOLDER=<addr_test1w...>
 
 # EVM contract address
@@ -180,7 +180,7 @@ CROSS_TRANSFER_AMOUNT=100
 EVM_CHAIN_ID=2153201998
 ADA_CHAIN_ID=2147485463
 
-# --- Validator parameterization (set after deploy-prod-validators.ts) ---
+# --- Validator parameterization (set after deploy-xport.ts) ---
 CHECK_TOKEN_SYMBOL=<from-deploy-output>
 CHECK_TOKEN_NAME=<from-deploy-output>
 GROUP_NFT_SYMBOL=<from-deploy-output>

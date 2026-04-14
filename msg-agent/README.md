@@ -168,7 +168,7 @@ msg-agent/
     deploy-and-generate-env.ts  Deploy validators + generate .env.local
     test-local.ts             Local integration tests
     setup-preprod.ts          Preprod testnet setup
-    deploy-prod-validators.ts Production deployment
+    deploy-xport.ts            Deploy XPort on existing infrastructure
     update-gpk.ts             Update group public key
     mint-check-tokens.ts      Mint check tokens
 ```
