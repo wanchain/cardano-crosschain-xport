@@ -12,7 +12,7 @@ use cross_chain/types.{
   GroupAdminNFTCheckTokenInfo, GroupNFTTokenInfo, InboundCheckRedeemer,
   InboundMintCheckInfo, InboundProof, LocalAddress,
 }
-use cross_chain/utils.{get_group_info, is_single_asset}
+use cross_chain/utils.{get_group_info, get_param, is_single_asset}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ fn mint_spend_check(
   let group_info =
     get_group_info(list.map(tx.reference_inputs, fn(i) { i.output }), group_nft)
 
-  let stk_vh = group_info.stk_vh
+  let stk_vh = get_param(group_info, types.param_stk_vh)
 
   // ── 2. check token in own output at stk_vh ────────────────────────────────
   // Must be exactly 1 check token at the stk_vh script, with single-asset value
@@ -155,7 +155,7 @@ fn mint_spend_check(
   // ── 3. checkSignature ────────────────────────────────────────────────────
   let hash_redeemer = builtin.sha3_256(builtin.serialise_data(proof_data))
 
-  let gpk = group_info.gpk
+  let gpk = get_param(group_info, types.param_gpk)
   let mode = proof_data.mode
 
   let check_signature =

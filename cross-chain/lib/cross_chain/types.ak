@@ -1,26 +1,44 @@
-use aiken/crypto.{ScriptHash, VerificationKeyHash}
+use aiken/crypto.{VerificationKeyHash}
 use cardano/address.{Address}
 use cardano/assets.{AssetName, PolicyId}
 use cardano/transaction.{OutputReference}
 
 /// Configuration parameters for the storeman group.
 /// Stored as datum in the GroupNFT holder UTxO.
+/// Encoding: Constr 0 [List [bs1..bs14]].
 pub type GroupInfoParams {
-  version: ScriptHash,
-  admin: ByteArray,
-  gpk: ByteArray,
-  balance_worker: ByteArray,
-  treasury_check_vh: ByteArray,
-  oracle_worker: ByteArray,
-  mint_check_vh: ByteArray,
-  stk_vh: ByteArray,
-  stake_check_vh: ByteArray,
-  nft_ref_holder_vh: ByteArray,
-  nft_treasury_check_vh: ByteArray,
-  nft_mint_check_vh: ByteArray,
-  outbound_holder_vh: ByteArray,
-  inbound_check_vh: ByteArray,
+  params: List<ByteArray>,
 }
+
+/// Indices into GroupInfoParams.params list.
+/// These match the deployed ParamType constructor indices.
+pub const param_version = 0
+
+pub const param_admin = 1
+
+pub const param_gpk = 2
+
+pub const param_balance_worker = 3
+
+pub const param_treasury_check_vh = 4
+
+pub const param_oracle_worker = 5
+
+pub const param_mint_check_vh = 6
+
+pub const param_stk_vh = 7
+
+pub const param_stake_check_vh = 8
+
+pub const param_nft_ref_holder_vh = 9
+
+pub const param_nft_treasury_check_vh = 10
+
+pub const param_nft_mint_check_vh = 11
+
+pub const param_outbound_holder_vh = 12
+
+pub const param_inbound_check_vh = 13
 
 /// Admin multi-sig datum
 pub type AdminDatum {

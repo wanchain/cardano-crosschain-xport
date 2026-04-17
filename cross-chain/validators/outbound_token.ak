@@ -10,7 +10,7 @@ use cross_chain/types.{
   CrossMsgData, ForeignAddress, FunctionCallData, GroupInfoParams,
   GroupNFTTokenInfo, LocalAddress, OutboundTokenParams,
 }
-use cross_chain/utils.{get_group_info, is_single_asset}
+use cross_chain/utils.{get_group_info, get_param, is_single_asset}
 
 /// Minting policy for outbound tokens.
 ///
@@ -40,7 +40,8 @@ fn validate_outbound_token(
         group_nft,
       )
 
-    let outbound_holder_vh = group_info.outbound_holder_vh
+    let outbound_holder_vh =
+      get_param(group_info, types.param_outbound_holder_vh)
 
     let outputs_at_holder =
       list.filter(
@@ -126,23 +127,13 @@ fn oref(idx: Int) -> OutputReference {
   }
 }
 
-// Minimal GroupInfoParams with only outbound_holder_vh filled in
+// Minimal GroupInfoParams with only outbound_holder_vh (index 12) filled in
 fn group_info_params() -> GroupInfoParams {
   GroupInfoParams {
-    version: #"00",
-    admin: #"00",
-    gpk: #"00",
-    balance_worker: #"00",
-    treasury_check_vh: #"00",
-    oracle_worker: #"00",
-    mint_check_vh: #"00",
-    stk_vh: #"00",
-    stake_check_vh: #"00",
-    nft_ref_holder_vh: #"00",
-    nft_treasury_check_vh: #"00",
-    nft_mint_check_vh: #"00",
-    outbound_holder_vh,
-    inbound_check_vh: #"00",
+    params: [
+      #"00", #"00", #"00", #"00", #"00", #"00", #"00", #"00", #"00", #"00",
+      #"00", #"00", outbound_holder_vh, #"00",
+    ],
   }
 }
 

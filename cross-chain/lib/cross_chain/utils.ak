@@ -76,19 +76,27 @@ pub fn get_group_info(
   datum
 }
 
+/// Look up a parameter from GroupInfoParams by index.
+pub fn get_param(group_info: GroupInfoParams, index: Int) -> ByteArray {
+  expect Some(value) = list.at(group_info.params, index)
+  value
+}
+
 /// Look up the target validator hash from GroupInfoParams by index.
 pub fn get_target_vh(
   params: GroupInfoParams,
   index: GroupInfoIndex,
 ) -> ByteArray {
-  when index is {
-    types.TreasuryCheckVH -> params.treasury_check_vh
-    types.MintCheckVH -> params.mint_check_vh
-    types.StakeCheckVH -> params.stake_check_vh
-    types.NFTRefHolderVH -> params.nft_ref_holder_vh
-    types.NFTTreasuryCheckVH -> params.nft_treasury_check_vh
-    types.NFTMintCheckVH -> params.nft_mint_check_vh
-    types.OutboundHolderVH -> params.outbound_holder_vh
-    types.InboundCheckVH -> params.inbound_check_vh
-  }
+  let i =
+    when index is {
+      types.TreasuryCheckVH -> types.param_treasury_check_vh
+      types.MintCheckVH -> types.param_mint_check_vh
+      types.StakeCheckVH -> types.param_stake_check_vh
+      types.NFTRefHolderVH -> types.param_nft_ref_holder_vh
+      types.NFTTreasuryCheckVH -> types.param_nft_treasury_check_vh
+      types.NFTMintCheckVH -> types.param_nft_mint_check_vh
+      types.OutboundHolderVH -> types.param_outbound_holder_vh
+      types.InboundCheckVH -> types.param_inbound_check_vh
+    }
+  get_param(params, i)
 }

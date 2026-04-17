@@ -188,26 +188,13 @@ fn mk_param() -> CheckTokenParam {
   }
 }
 
-/// GroupInfoParams with all validator hashes set to a placeholder except
-/// inbound_check_vh which is set to target_vh().
+/// GroupInfoParams with all fields set to a placeholder except
+/// inbound_check_vh (index 13) which is set to target_vh().
 fn mock_group_info() -> GroupInfoParams {
-  let placeholder =
+  let p =
     #"0000000000000000000000000000000000000000000000000000000000000000"
   GroupInfoParams {
-    version: placeholder,
-    admin: placeholder,
-    gpk: placeholder,
-    balance_worker: placeholder,
-    treasury_check_vh: placeholder,
-    oracle_worker: placeholder,
-    mint_check_vh: placeholder,
-    stk_vh: placeholder,
-    stake_check_vh: placeholder,
-    nft_ref_holder_vh: placeholder,
-    nft_treasury_check_vh: placeholder,
-    nft_mint_check_vh: placeholder,
-    outbound_holder_vh: placeholder,
-    inbound_check_vh: target_vh(),
+    params: [p, p, p, p, p, p, p, p, p, p, p, p, p, target_vh()],
   }
 }
 

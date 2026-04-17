@@ -8,8 +8,9 @@ use cardano/transaction.{
 }
 use cross_chain/types.{
   AdminNftTokenInfo, GroupAdminNFTInfo, GroupInfoParams, GroupNFTTokenInfo,
+  param_oracle_worker, param_version,
 }
-use cross_chain/utils.{is_single_asset}
+use cross_chain/utils.{get_param, is_single_asset}
 
 /// GroupNFTHolder — spending validator for the GroupNFT UTxO
 ///
@@ -69,28 +70,6 @@ fn params_diff_go(
   }
 }
 
-/// Convert GroupInfoParams to a flat list of ByteArray in the canonical field order:
-///   [version, admin, gpk, balance_worker, treasury_check_vh, oracle_worker,
-///    mint_check_vh, stk_vh, stake_check_vh, nft_ref_holder_vh,
-///    nft_treasury_check_vh, nft_mint_check_vh, outbound_holder_vh, inbound_check_vh]
-fn params_to_list(p: GroupInfoParams) -> List<ByteArray> {
-  [
-    p.version,
-    p.admin,
-    p.gpk,
-    p.balance_worker,
-    p.treasury_check_vh,
-    p.oracle_worker,
-    p.mint_check_vh,
-    p.stk_vh,
-    p.stake_check_vh,
-    p.nft_ref_holder_vh,
-    p.nft_treasury_check_vh,
-    p.nft_mint_check_vh,
-    p.outbound_holder_vh,
-    p.inbound_check_vh,
-  ]
-}
 
 validator group_nft_holder(param: GroupAdminNFTInfo) {
   spend(
@@ -120,7 +99,8 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
         admin.admin_nft_name,
       ) == 1
 
-    let oracle_worker_pkh = group_info_params(own_input.output).oracle_worker
+    let oracle_worker_pkh =
+      get_param(group_info_params(own_input.output), param_oracle_worker)
 
     let is_authorized =
       has_admin_nft_in_input || action == 2 && list.has(
@@ -155,7 +135,7 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
       }
 
     let out_params = group_info_params(own_output)
-    let version_vh = out_params.version
+    let version_vh = get_param(out_params, param_version)
 
     let b_single_asset =
       is_single_asset(
@@ -172,8 +152,8 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
 
     let output_has_token = b_single_asset && is_right_owner
 
-    let old_params = params_to_list(group_info_params(own_input.output))
-    let new_params = params_to_list(out_params)
+    let old_params = group_info_params(own_input.output).params
+    let new_params = out_params.params
 
     let check_params_len =
       if action == 0 {
@@ -242,20 +222,26 @@ fn oref(idx: Int) -> OutputReference {
 
 fn base_params() -> GroupInfoParams {
   GroupInfoParams {
-    version: version_vh,
-    admin: #"aa",
-    gpk: #"bb",
-    balance_worker: #"cc",
-    treasury_check_vh: #"dd",
-    oracle_worker: oracle_worker_pkh,
-    mint_check_vh: #"ee",
-    stk_vh: #"ff",
-    stake_check_vh: #"0a",
-    nft_ref_holder_vh: #"0b",
-    nft_treasury_check_vh: #"0c",
-    nft_mint_check_vh: #"0d",
-    outbound_holder_vh: #"0e",
-    inbound_check_vh: #"0f",
+    params: [
+      version_vh, #"aa", #"bb", #"cc", #"dd", oracle_worker_pkh, #"ee", #"ff",
+      #"0a", #"0b", #"0c", #"0d", #"0e", #"0f",
+    ],
+  }
+}
+
+/// Replace a single element in a GroupInfoParams list by index (test helper).
+fn set_param(p: GroupInfoParams, index: Int, value: ByteArray) -> GroupInfoParams {
+  GroupInfoParams {
+    params: list.indexed_map(
+      p.params,
+      fn(i, v) {
+        if i == index {
+          value
+        } else {
+          v
+        }
+      },
+    ),
   }
 }
 
@@ -349,7 +335,8 @@ fn validate_group_nft_holder(
   let has_admin_nft =
     quantity_of(total_input_value, admin.admin_nft_symbol, admin.admin_nft_name) == 1
 
-  let oracle_pkh = group_info_params(own_input.output).oracle_worker
+  let oracle_pkh =
+    get_param(group_info_params(own_input.output), param_oracle_worker)
 
   let is_authorized =
     has_admin_nft || action == 2 && list.has(tx.extra_signatories, oracle_pkh)
@@ -378,7 +365,7 @@ fn validate_group_nft_holder(
     }
 
   let out_params = group_info_params(own_output)
-  let ver_vh = out_params.version
+  let ver_vh = get_param(out_params, param_version)
 
   let single_ok =
     is_single_asset(
@@ -395,8 +382,8 @@ fn validate_group_nft_holder(
 
   let output_has_token = single_ok && right_owner
 
-  let old_list = params_to_list(group_info_params(own_input.output))
-  let new_list = params_to_list(out_params)
+  let old_list = group_info_params(own_input.output).params
+  let new_list = out_params.params
 
   let len_ok =
     if action == 0 {
@@ -424,7 +411,7 @@ test test_authorized_with_admin_nft() {
 test test_authorized_oracle_worker() {
   let ref = oref(0)
   // index 2 = gpk — the oracle worker is allowed to update it under action=2
-  let new_params = GroupInfoParams { ..base_params(), gpk: #"deadbeef" }
+  let new_params = set_param(base_params(), types.param_gpk, #"deadbeef")
   let tx =
     Transaction {
       ..base_tx(),
@@ -476,10 +463,9 @@ test test_output_has_token() {
 }
 
 test test_param_diff_allows_single_change() {
-  // action=1 → index 1 is the `admin` field; changing only that is fine
+  // action=1 → index 1 (param_admin); changing only that is fine
   let ref = oref(0)
-  let new_params =
-    GroupInfoParams { ..base_params(), admin: #"6e657761646d696e" }
+  let new_params = set_param(base_params(), types.param_admin, #"6e657761646d696e")
   let tx =
     Transaction {
       ..base_tx(),
@@ -493,11 +479,9 @@ test test_param_diff_rejects_two_changes() {
   // action=1 but both admin (index 1) and gpk (index 2) differ → must fail
   let ref = oref(0)
   let new_params =
-    GroupInfoParams {
-      ..base_params(),
-      admin: #"6e657761646d696e",
-      gpk: #"6e657767706b",
-    }
+    base_params()
+      |> set_param(types.param_admin, #"6e657761646d696e")
+      |> set_param(types.param_gpk, #"6e657767706b")
   let tx =
     Transaction {
       ..base_tx(),
@@ -508,7 +492,7 @@ test test_param_diff_rejects_two_changes() {
 }
 
 test test_params_diff_identical_lists() {
-  let p = params_to_list(base_params())
+  let p = base_params().params
   params_diff(p, p, 1)
 }
 
@@ -538,7 +522,7 @@ test test_action_0_version_upgrade() {
   let ref = oref(0)
   let old_params = base_params()
   // Only the version field changes; everything else stays identical
-  let new_params = GroupInfoParams { ..old_params, version: new_version_vh }
+  let new_params = set_param(old_params, types.param_version, new_version_vh)
   // Output is at the NEW version VH address
   let new_addr =
     Address {
@@ -570,7 +554,7 @@ test test_action_0_version_upgrade() {
 test test_action_0_rejects_oracle_worker() {
   let ref = oref(0)
   let old_params = base_params()
-  let new_params = GroupInfoParams { ..old_params, version: new_version_vh }
+  let new_params = set_param(old_params, types.param_version, new_version_vh)
   let new_addr =
     Address {
       payment_credential: Script(new_version_vh),
@@ -633,8 +617,7 @@ test test_output_wrong_owner() {
   let ref = oref(0)
   // Output is still at script_addr() (version_vh) so the continuing-output
   // filter passes, but the datum declares a different version hash → is_right_owner fails.
-  let bad_params =
-    GroupInfoParams { ..base_params(), version: wrong_version_vh }
+  let bad_params = set_param(base_params(), types.param_version, wrong_version_vh)
   let bad_output =
     Output {
       address: script_addr(),
