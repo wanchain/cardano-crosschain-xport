@@ -70,7 +70,6 @@ fn params_diff_go(
   }
 }
 
-
 validator group_nft_holder(param: GroupAdminNFTInfo) {
   spend(
     _datum: Option<Data>,
@@ -230,7 +229,11 @@ fn base_params() -> GroupInfoParams {
 }
 
 /// Replace a single element in a GroupInfoParams list by index (test helper).
-fn set_param(p: GroupInfoParams, index: Int, value: ByteArray) -> GroupInfoParams {
+fn set_param(
+  p: GroupInfoParams,
+  index: Int,
+  value: ByteArray,
+) -> GroupInfoParams {
   GroupInfoParams {
     params: list.indexed_map(
       p.params,
@@ -465,7 +468,8 @@ test test_output_has_token() {
 test test_param_diff_allows_single_change() {
   // action=1 → index 1 (param_admin); changing only that is fine
   let ref = oref(0)
-  let new_params = set_param(base_params(), types.param_admin, #"6e657761646d696e")
+  let new_params =
+    set_param(base_params(), types.param_admin, #"6e657761646d696e")
   let tx =
     Transaction {
       ..base_tx(),
@@ -617,7 +621,8 @@ test test_output_wrong_owner() {
   let ref = oref(0)
   // Output is still at script_addr() (version_vh) so the continuing-output
   // filter passes, but the datum declares a different version hash → is_right_owner fails.
-  let bad_params = set_param(base_params(), types.param_version, wrong_version_vh)
+  let bad_params =
+    set_param(base_params(), types.param_version, wrong_version_vh)
   let bad_output =
     Output {
       address: script_addr(),
