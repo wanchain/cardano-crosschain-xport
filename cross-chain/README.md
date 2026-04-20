@@ -1,78 +1,91 @@
-# Contracts Description
+# cross-chain
 
-> NOTE: Some scripts are for both asset and XPort crosschain scenarios, and some scripts for asset crosschain only are not listed here.
+Aiken V3 validators for the Cardano side of the Wanchain cross-chain bridge. These validators handle governance, inbound/outbound message passing, replay prevention, and token minting/burning for cross-chain operations between Cardano and EVM chains. GroupNFT and AdminNFT are external dependencies shared with the asset crosschain protocol; only the core protocol and application validators are compiled here.
 
-* ### GroupNFT (Common for Asset/XPort Crosschain)
-     Responsible to mint a NFT Token such as GroupNFTToken and AdminNFTToken.
-  
-* #### GroupNFTToken
-    GroupNFTToken stores important parameters for crosschain, such as GPK, in inline datum
-  
-* #### AdminNFTToken
-    AdminNFTToken stores Administator parameters, such as all Administators's PK of and the Authorization thresholds, in inline datum
+## Validators
 
-* ### GroupNFTHolder (Common for Asset/XPort Crosschain)
-    The contract holds the GroupNFT.
+### Core protocol validators
 
-* ### AdminNFTHolder (Common for Asset/XPort Crosschain)
-    The contract holds the AdminNFTToken minted via GroupNFT. Any management operations must be authorized by the AdminNFTHolder.
+| Validator | Type | Parameter | Purpose |
+|-----------|------|-----------|---------|
+| **group_nft_holder** | Spending | `GroupAdminNFTInfo` | Guards the GroupNFT UTxO that stores `GroupInfoParams` (GPK, oracle worker, validator hashes, etc.). Updates require AdminNFT or oracle worker signature. |
+| **admin_nft_holder** | Spending | `AdminNftTokenInfo` | Guards the AdminNFT UTxO that stores `AdminDatum` (signatories + threshold). Enforces m-of-n multi-sig for Use/Update/Upgrade actions. |
+| **check_token** | Minting | `CheckTokenParam` | Mints permission tokens (e.g. InboundCheckToken). Requires AdminNFT; minted tokens must land at the target validator specified in `GroupInfoParams`. |
+| **inbound_mint_check** | Spending | `InboundMintCheckInfo` | Validates inbound cross-chain proofs. Verifies MPC signatures (Ed25519, ECDSA secp256k1, or Schnorr secp256k1) against the group public key (GPK). Enforces replay prevention via UTxO nonce and TTL expiry. |
+| **inbound_token** | Minting | `CheckTokenInfo` | Mints inbound tokens representing a cross-chain message arrival. Requires a check token in inputs when minting; burning is unconditional. |
+| **outbound_token** | Minting | `OutboundTokenParams` | Mints outbound tokens representing a cross-chain message departure. Requires exactly 1 token sent to the outbound holder script with a `CrossMsgData` datum. The source address must appear in tx inputs. |
+| **xport** | Spending | `KeyParam` | Cross-chain gateway. Holds outbound tokens with their message datums. Spending requires a signature from the configured verification key. |
 
-* ### InboundToken
-    Responsible to mint InboundToken which represent a inbound msg from other chain,the asset name is a unique parameter which prepresent the remote origin contract.
+### Application validators (in `validators/demo/`)
 
-* ### CheckToken
-    Responsible to mint CheckToken which represent a certain type of permission which is determined by the XXXCheck contract, such as InboundCheckToken <--> InboundMintCheck
+These validators implement the bridge token application. They are located in the `demo/` subdirectory and are parameterized at deployment time, working with the core protocol validators above.
 
-* ### InboundMintCheck
-    The contract holds the InboundCheckToken minted via CheckToken, is responsible for Mint operation of InboundToken is authorized. 
+| Validator | Type | Parameter | Purpose |
+|-----------|------|-----------|---------|
+| **inbound_handler** | Spending | `PolicyId` (inbound token policy) | Processes inbound tasks: verifies the inbound token is present, deserializes `CrossMsgData`, mints bridge tokens to the receiver, and checks amounts match. |
+| **outbound_handler** | Spending | `PolicyId` (outbound token policy) | Processes outbound tasks: burns bridge tokens, constructs `CrossMsgData` with `wmbReceiveNonEvm` call, and sends an outbound token to the XPort address. |
+| **bridge_token** | Minting | `ScriptHash` (owner) + `AssetName` | Mints/burns the bridge token (e.g. DemoToken). Minting requires exactly one input from the owner script; burning is unconditional. |
 
-* ### OutboundToken
-    Responsible to mint OutboundToken which represent a outbound msg to other chain,the asset name is a fixed value.
+## Validator parameterization chain
 
-* ### XPort
-    The contract holds the OutboundToken minted via OutboundToken, and each OutboundToken is bound to a datum containing outbound msg. 
-      
-<br />
-<br />
+Validators are parameterized at deployment time. The dependency graph determines the order they must be compiled and applied. GroupNFT and AdminNFT are external dependencies provided at deployment time.
 
-# Scenario Description
+```
+# External: group_nft_symbol and admin_nft_symbol provided at deployment
 
-|Scenario||Input|Referece Input|Output|Validator Rules|
-| --------------------------------------------| ----------------------------------------| ------------------------------------------------------------| ---------------------------| ---------------------------------------------------------------------------------------------------------------------------| -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|Management Tx<br />|Mint GroupNFT Token|1. utxo which is specified by the contract parameters||1. utxo with GroupNFT Token (whose owner is usually the GroupNFTHolder)|1. must spend the utxo which is specified by GroupNFT ‘s parameter|
-||Update GroupNFT Token|1. utxo with GroupNFT Token||1. utxo with GroupNFT Token|1. must spend utxo with AdminNFT when update any one of the parameters or signed by oracle-worker when update GPK.<br />2. update only one of the parameter at a time except when setting a new version(upgrading the GroupNFTHolder contract)<br />3. check the owner of GroupNFT is not changed except when setting a new version.|
-||Mint AdminNFT Token|1.utxo which is specified by the contract parameters||1.utxo with AdminNFT Token (whose owner is usually the AdminNFTHolder)|1. must spend the utxo which is specified by GroupNFT‘s parameter( an another utxo is different with in Mint GrouNFT )|
-||Spend AdminNFT Token|1. utxo with AdminNFT Token||1. utxo with AdminNFT Token|1. satisfies m/n multi-signatures<br />2. check AdminNFT in outputs:<br />       i) if action is Update ,check the new datum of the AdminNFT is valid. And the owner is AdminNFTHolder<br />      ii) if action is Use , check the datum of the AdminNFT is not changed.And the owner is AdminNFTHolder<br />      iii) if action is Upgrade ,the owner of AdminNFT must be a contract|
-||Mint XXXCheckToken|1.utxo with AdminNFT Token||1.utxo with AdminNFT <br />|1. must spend AdminNFT<br />2. check the owner of XXXCheckToken in outputs:<br />    i) TreasuryCheckToken is owned By TreasuryCheck<br />    ii) MintCheckToken is owned By MintCheck<br />    iii) NFTTreasuryCheckToken is owned By NFTTreasuryCheck<br />    iiii) NFTMintCheckToken is owned By NFTMintCheck<br />     iv) InboundCheckToken is owned By InboundMintCheck<br /> 3. check the amount of XXXCheckToken in each utxo is no bigger than 1|
-||Burn XXXCheckToken|1.utxo with AdminNFT Token||1.utxo with AdminNFT|1. must spend AdminNFT<br />2. check all XXXCheckToken has been burned|
-||Operations about Stake|1.utxo with AdminNFT Token||1.utxo with AdminNFT<br />2. utxo owner by StackCheck if needed|1. must spend AdminNFT<br />2. check one of the outputs owner by StackCheck if redeemer is SpendU.|
-|||||||
-|Storeman Tx|InboundToken Mint: msg@EVM => msg@ADA|1. utxo with InboundCheckToken owner by InboundMintCheck<br />|1. utxo with GroupInfoNFT|1. utxo with InboundToken, owned by the third-part contract<br />2. utxo with InboundCheckToken, owned by InboundMintCheck <br />|1. check the redeemer is signed by MPC<br />2. check the tx  must spend the utxo specified by the redeemer<br />3. check the Minted InboundToken amount is 1 <br />4. check the InboundToken received by the target address specified by the redeemer.<br />5. check the tx is not expired.<br />6.  check the owner of TresuryCheckToken is still the TreasuryCheck.<br />7. check the datum of the target's output is the msg specified by redeemer<br /><br />|
-|User Tx|OutboundToken Mint: msg@ADA => msg@EVM|1. utxos of the third-part contract|1. utxo with GroupInfoNFT|1. utxo with OutboundToken, owned by XPort<br />|1. must mint only 1 OutboundToken to Xport,and the output must has a datum containing cross-msg<br />2. must spend a utxo of the third-part contract, and the third-part contract address is the source address speicify by the cross-msg datum.<br /><br />|
-|||||||
+group_nft_holder(GroupAdminNFTInfo)  <-- references group_nft + admin_nft policy IDs
+    |
+    v
+admin_nft_holder(AdminNftTokenInfo)  <-- references admin_nft policy ID
+    |
+    v
+check_token(CheckTokenParam)         <-- references group_nft + admin_nft + GroupInfoIndex
+    |
+    v
+inbound_mint_check(InboundMintCheckInfo) <-- references group_nft + admin_nft + check_token + inbound mint policy
+    |
+    v
+inbound_token(CheckTokenInfo)        <-- references check_token policy ID
+outbound_token(OutboundTokenParams)  <-- references group_nft + token name
+xport(KeyParam)                      <-- references a verification key hash
 
-<br />
-
-![image](image-1.png)
-![image](image-2.png)
-![image](image-3.png)
-
-# How to compile
-
-## 1. prepare compile environment (with nix-shell )
-```shell
-git clone https://github.com/IntersectMBO/plutus-apps.git
-cd plutus-apps
-git checkout v1.0.0-alpha1
-nix-shell --extra-experimental-features flakes
+Application layer (in demo/ subdirectory):
+demo/inbound_handler(PolicyId)       <-- inbound_token policy ID
+demo/outbound_handler(PolicyId)      <-- outbound_token policy ID
+demo/bridge_token(ScriptHash, AssetName) <-- owner script hash (inbound_handler or outbound_handler)
 ```
 
-## 2. compile contract
+## Shared types and utilities
 
-```shell
-cd {project_path}/cross-chain
-nix --extra-experimental-features "nix-command flakes" run .#cross-chain:exe:cross-chain --print-build-logs
+- **`lib/cross_chain/types.ak`** -- All shared types: `GroupInfoParams`, `AdminDatum`, `CrossMsgData`, `InboundProof`, `Beneficiary`, redeemer types, and token info records.
+- **`lib/cross_chain/utils.ak`** -- Helper functions: `get_group_info` (reads GroupNFT datum from reference inputs), `get_target_vh` (looks up validator hashes by index), `is_single_asset`, `value_at_address`, `outputs_at`, `total_input_value`.
+
+## Build
+
+Requires [Aiken](https://aiken-lang.org/) v1.1.21 or later.
+
+```sh
+cd cross-chain
+aiken build
 ```
 
-## 3. compile result
-All contracts compilecode is in {project_path}/cross-chain/generated-plutus-scripts
+This compiles all validators and writes the output to `plutus.json`.
+
+## Test
+
+```sh
+cd cross-chain
+aiken check
+```
+
+Unit tests live alongside validators in `*.test.ak` files and inline `test` blocks within validator files. The inbound_mint_check mint/spend path requires real cryptographic signatures and is covered by integration tests rather than in-source unit tests.
+
+## plutus.json
+
+`plutus.json` is the compiled CIP-57 blueprint produced by `aiken build`. It is committed to the repository because the **msg-agent** reads it at runtime to:
+
+1. Look up validator CBOR hex by title (e.g. `group_nft_holder.group_nft_holder.spend`)
+2. Apply parameters (UTxO refs, policy IDs, script hashes) to produce final on-chain scripts
+3. Compute policy IDs and script addresses for transaction building
+
+The file contains 10 validators (20 entries counting the `else` fallback handlers). Any change to validator source requires re-running `aiken build` and committing the updated `plutus.json`.

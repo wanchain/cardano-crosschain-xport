@@ -3,13 +3,33 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts monitor",
+    "dev": "ts-node src/index.ts monitor",
+    "client": "ts-node src/index.ts client",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deploy:local": "ts-node scripts/deploy-and-generate-env.ts",
+    "test:local": "ts-node scripts/test-local.ts",
+    "setup:preprod": "ts-node scripts/setup-preprod.ts",
+    "deploy:prod": "ts-node scripts/deploy-xport.ts",
+    "update:gpk": "ts-node scripts/update-gpk.ts",
+    "mint:check-tokens": "ts-node scripts/mint-check-tokens.ts",
+    "test:local:check": "ts-node scripts/test-local.ts check",
+    "test:local:inbound": "ts-node scripts/test-local.ts inbound",
+    "test:local:outbound": "ts-node scripts/test-local.ts outbound",
+    "test:e2e": "vitest run test/e2e.test.ts --testTimeout 300000"
+  },
   "dependencies": {
-    "@meshsdk/core": "^1.9.0-beta.89",
+    "@meshsdk/core": "1.9.0-beta.89",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3"
   },
   "devDependencies": {
+    "@noble/ed25519": "^3.0.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2"
   }
 }

@@ -1,0 +1,41 @@
+name: EVM Contracts CI
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "evm-contracts/**"
+      - ".github/workflows/evm-contracts-ci.yml"
+  pull_request:
+    paths:
+      - "evm-contracts/**"
+      - ".github/workflows/evm-contracts-ci.yml"
+
+env:
+  PK: "0x0000000000000000000000000000000000000000000000000000000000000001"
+  PK2: "0x0000000000000000000000000000000000000000000000000000000000000002"
+
+jobs:
+  test:
+    name: Solidity Compile & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: evm-contracts
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: evm-contracts/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Compile contracts
+        run: npx hardhat compile
+
+      - name: Run tests
+        run: npx hardhat test test/CBORCodec.test.ts test/CardanoCBORCodec.test.ts test/PlutusData.test.ts test/WmbGateway.test.ts test/WmbAppV3.test.ts test/E2E.test.ts

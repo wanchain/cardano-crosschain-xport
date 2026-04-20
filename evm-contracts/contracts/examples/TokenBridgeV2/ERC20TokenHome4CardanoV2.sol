@@ -13,16 +13,17 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
     bytes public inboundTokenRemote;
     bytes public outboundTokenRemote;
     uint256 public remoteChainId;
+    uint256 public outboundGasLimit = 300_000;
 
     struct AdaAddress {
         bytes paymentKey;
-        bool isPaymentScipt;
+        bool isPaymentScript;
         bool hasStakeKey;
-        bytes stackeKey;
+        bytes stakeKey;
         bool isStakeScript;
     }
 
-    struct CCMesssage {
+    struct CCMessage {
         AdaAddress receiverAda;
         bytes receiverEvm;
         bool isEvmChain;
@@ -41,12 +42,18 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
         uint256 amount
     );
     event ConfigTokenRemote(bytes tokenRemote);
+    event OutboundGasLimitSet(uint256 gasLimit);
 
     constructor(
         address _wmbGateway,
         address _tokenAddress
     ) WmbAppV3(_wmbGateway) {
         tokenAddress = _tokenAddress;
+    }
+
+    function setOutboundGasLimit(uint256 _gasLimit) external onlyOwner {
+        outboundGasLimit = _gasLimit;
+        emit OutboundGasLimitSet(_gasLimit);
     }
 
     function configInboundTokenRemote(
@@ -75,7 +82,7 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
         require(outboundTokenRemote.length != 0, "tokenRemote not set");
 
         // decode plutusData
-        CCMesssage memory msgData = parseToMsg(plutusData);
+        CCMessage memory msgData = parseToMsg(plutusData);
         require(
             msgData.isEvmChain == false,
             "The Target Should be Cardano Chain! "
@@ -95,7 +102,7 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
         uint receivedAmount = newBalance - balance;
 
         // dispatch msg
-        _dispatchMessageNonEvm(remoteChainId, outboundTokenRemote, 300_000, plutusData);
+        _dispatchMessageNonEvm(remoteChainId, outboundTokenRemote, outboundGasLimit, plutusData);
         emit SendTokenToRemote(remoteChainId, msg.sender, receivedAmount);
     }
 
@@ -105,15 +112,12 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
         uint256 fromChainId,
         bytes memory from
     ) internal override {
-        CCMesssage memory msgData = parseToMsg(data);
+        // Trust verification is handled by WmbAppV3.wmbReceiveNonEvm via trustedRemotes[fromChainId][from]
+        CCMessage memory msgData = parseToMsg(data);
         require(
             msgData.isEvmChain == true,
             "The Target Should be EVM ChainType! "
         );
-
-        bytes32 hashInbound = keccak256(inboundTokenRemote);
-        bytes32 hashFrom = keccak256(from);
-        require(hashInbound == hashFrom, "TokenHome4Cardano: msgSender is not trusted inbound contract");
 
         uint256 amount = msgData.amount;
         address to = address(uint160(bytes20(msgData.receiverEvm)));
@@ -124,7 +128,7 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
 
     function parseToMsg(
         bytes memory cbor
-    ) public pure returns (CCMesssage memory msgInfo) {
+    ) public pure returns (CCMessage memory msgInfo) {
         RFC8949Decoder.CborValue memory cb = RFC8949Decoder.decode(cbor);
         require(cb.arrayValue.length == 1, "cb.arrayValue.length == 1");
         RFC8949Decoder.CborValue memory fields = cb.arrayValue[0];
@@ -204,6 +208,7 @@ contract ERC20TokenHome4CardanoV2 is WmbAppV3 {
                 "fields.arrayValue[1].arrayValue[0].data.length"
             );
             uint len = fields.arrayValue[1].arrayValue[0].data.length;
+            require(len <= 32, "amount too large");
             for (uint i = 0; i < len; i++) {
                 msgInfo.amount =
                     (msgInfo.amount << 8) |

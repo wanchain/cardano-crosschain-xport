@@ -1,0 +1,28 @@
+I've tested my changes to xport locally and they are working well, I now want to test this on preprod since locally, I'm not running any storeman groups, just mocking proofs.
+
+I've migrated the Haskell Plutus V2 scripts to Aiken V3, and also made some improvements to the existing Aiken scripts. I'm able to send a non-EVM message from the EVM test token (there's a new token I deployed), but the message does not reach the Cardano preprod chain. I expect we need to update some config with your storeman group so that I can continue testing.
+
+I need three things to continue testing:
+
+- Configure the storeman group to watch for MessageDispatchedNonEVM events on chain ID 2147485463 (Cardano preprod) and relay them to Cardano. Note: the inbound flow has changed - the relay now needs to spend a check token at InboundMintCheck with a cryptographic proof (signature verified against the group public key). The previous demo setup allowed inbound tokens to be minted without authorization, which has been replaced with proper proof verification.
+- Share the Storeman Group's public key - the Cardano InboundMintCheck validator verifies signatures against a group public key stored in the GroupInfoParams datum. I currently have a testing key set here. I need the actual public key so that inbound proofs can be verified.
+- Enable the Cardano → EVM relay - the Storeman relay needs to watch our XPort address on Cardano Preprod for UTxOs containing outbound tokens, extract the CrossMsgData datum, and call gateway.receiveMessageNonEvm() on Wanchain Testnet with a valid MPC signature.
+
+Here are the addresses and policies you'll need:
+
+EVM (Wanchain Testnet):
+- TokenHome: 0x5b7E38C4c317D8054e328A1DE679c3Fd91E758c0
+- XToken: 0x5745e9BcCF4843beD25f871B4Bbe1f2AE54e2B73
+
+Cardano Preprod - script addresses:
+- InboundMintCheck: addr_test1wzcv9pd89c3k2za4vmqem5jusqrgshd8r20d428mjgles5gu2chgk
+- InboundHandler: addr_test1wrlhn9076ymzxdt05kvja84sk9vhtdpadjlacwlueg8vx4cc24z0j
+- OutboundHandler: addr_test1wpxzh4w37f4hk2lq69zz3fmed50utljy7ta4aqucnmdklhcer8w2e
+- XPort: addr_test1wrmlfvmndu9xy34eufl3h09fjvmlra7r953s4zpd42n7xqssy8q9r
+- GroupNFTHolder: addr_test1wpqgnm4p5wp2wg228d75l6qsfsrnlqhmcaxvwklkatc8tqsjr052a
+
+Cardano Preprod - token policies:
+- CheckToken: 37504e1364ec657a4c9d7e833461c82a67abb80df5d504bc587973e2
+- InboundToken: dc18856799d5f48b857f8603ed33db11f20d90d95ad6d25e2f50ae83
+- OutboundToken: 30681821e87fe1d0f6365da53ffb775930a780ef6a8595bdcc467c59
+- BridgeToken: 6903d28beccd0e9bd5d35d02765cc8c9df504091508cb0a614999fbc

@@ -104,3 +104,10 @@ dist
 .tern-port
 cross-chain/dist-newstyle/*
 sidechain-js/yarn.lock
+
+# Aiken build artifacts (plutus.json is committed — needed by msg-agent at runtime)
+build/
+
+# Haskell build (legacy)
+dist-newstyle/
+cabal.project.local

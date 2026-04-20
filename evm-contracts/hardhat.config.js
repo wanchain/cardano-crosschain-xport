@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("ts-node/register/transpile-only");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -40,7 +41,7 @@ module.exports = {
     },
     wanchainTestnet: {
       url: "https://gwan-ssl.wandevs.org:46891",
-      accounts: [process.env.PK, "0xb1720170841955e793ff9b813f557301f84d3fde95d4e9dde7bcb8bd433d7fb3"],
+      accounts: [process.env.PK, process.env.PK2].filter(Boolean),
       chainId: 999,
       gasPrice: 3e9,
       gas: 30000000,
