@@ -191,8 +191,7 @@ fn mk_param() -> CheckTokenParam {
 /// GroupInfoParams with all fields set to a placeholder except
 /// inbound_check_vh (index 13) which is set to target_vh().
 fn mock_group_info() -> GroupInfoParams {
-  let p =
-    #"0000000000000000000000000000000000000000000000000000000000000000"
+  let p = #"0000000000000000000000000000000000000000000000000000000000000000"
   GroupInfoParams {
     params: [p, p, p, p, p, p, p, p, p, p, p, p, p, target_vh()],
   }
