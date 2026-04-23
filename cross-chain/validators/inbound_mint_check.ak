@@ -2,7 +2,9 @@ use aiken/builtin
 use aiken/collection/dict
 use aiken/collection/list
 use aiken/interval.{Finite}
-use cardano/address.{Address, Script, VerificationKey}
+use cardano/address.{
+  Address, Script, VerificationKey, from_script, with_delegation_script,
+}
 use cardano/assets.{PolicyId, quantity_of}
 use cardano/transaction.{
   InlineDatum, Input, NoDatum, Output, OutputReference, Transaction,
@@ -84,8 +86,8 @@ fn burn_token_check(info: InboundMintCheckInfo, tx: Transaction) -> Bool {
   // Zero check tokens may appear in outputs (all must be burned)
   let check_output =
     value_produced(tx, check.check_token_symbol, check.check_token_name) == 0
-
-  has_admin_nft_in_input && check_output
+  // for trace info
+  has_admin_nft_in_input? && check_output?
 }
 
 // ── mint / spend path ─────────────────────────────────────────────────────────
@@ -110,24 +112,23 @@ fn mint_spend_check(
     get_group_info(list.map(tx.reference_inputs, fn(i) { i.output }), group_nft)
 
   let stk_vh = get_param(group_info, types.param_stk_vh)
+  let inbound_mint_check_vh =
+    get_param(group_info, types.param_inbound_check_vh)
+
+  let output_own_input = tx.inputs |> transaction.resolve_input(own_ref)
+
+  let is_right_mint_check =
+    with_delegation_script(from_script(inbound_mint_check_vh), stk_vh) == output_own_input.address
 
   // ── 2. check token in own output at stk_vh ────────────────────────────────
   // Must be exactly 1 check token at the stk_vh script, with single-asset value
-  let outputs_at_stk =
-    list.filter(
-      tx.outputs,
-      fn(o) {
-        when o.address.payment_credential is {
-          Script(h) -> h == stk_vh
-          _ -> False
-        }
-      },
-    )
+  let outputs_at_self =
+    list.filter(tx.outputs, fn(o) { o.address == output_own_input.address })
 
   // Sum check tokens at stk_vh and assert single-asset per output.
   let (check_token_amount_at_stk, all_single_asset) =
     list.foldl(
-      outputs_at_stk,
+      outputs_at_self,
       (0, True),
       fn(o, acc) {
         let (total, ok) = acc
@@ -204,8 +205,8 @@ fn mint_spend_check(
       Finite(upper) -> proof_data.ttl + 1 > upper
       _ -> False
     }
-
-  has_utxo && check_token_ok && check_signature && check_output && mint_ok && check_ttl
+  // for trace info
+  has_utxo? && check_token_ok? && check_signature? && check_output? && mint_ok? && check_ttl? && is_right_mint_check?
 }
 
 // ── validator ─────────────────────────────────────────────────────────────────

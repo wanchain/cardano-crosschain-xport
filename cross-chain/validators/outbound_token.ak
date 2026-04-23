@@ -66,8 +66,8 @@ fn validate_outbound_token(
 
     let source_in_inputs =
       list.any(tx.inputs, fn(input) { input.output.address == source_addr })
-
-    mint_value == 1 && single_asset_ok && source_in_inputs
+    // for trace info
+    (mint_value == 1)? && single_asset_ok? && source_in_inputs?
   }
 }
 

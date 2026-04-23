@@ -51,8 +51,8 @@ pub fn validate_inbound_token_mint(
         param.check_token_symbol,
         param.check_token_name,
       )
-
-    check_amount == 1
+    // for trace info
+    (check_amount == 1)?
   }
 }
 

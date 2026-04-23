@@ -98,8 +98,8 @@ pub fn validate_check_token_mint(
 
       total_check_tokens_at_target == mint_amount && num_outputs_at_target == mint_amount
     }
-
-  has_admin_nft && only_own_policy && check_output
+  // for trace info
+  has_admin_nft? && only_own_policy? && check_output?
 }
 
 /// Minting policy for check tokens.

@@ -116,8 +116,8 @@ validator admin_nft_holder(param: AdminNftTokenInfo) {
             _ -> True
           }
       }
-
-    is_authorized && input_has_admin_nft && check_admin_nft_owner_in_output && is_datum_correct
+    // for trace info
+    is_authorized? && input_has_admin_nft? && check_admin_nft_owner_in_output? && is_datum_correct?
   }
 
   else(_) {

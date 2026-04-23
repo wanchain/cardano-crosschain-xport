@@ -164,7 +164,7 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
     let check_new_datum =
       params_diff(old_params, new_params, action) && check_params_len
 
-    is_authorized && input_has_token && output_has_token && check_new_datum
+    is_authorized? && input_has_token? && output_has_token? && check_new_datum?
   }
 
   else(_) {
