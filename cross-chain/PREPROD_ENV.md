@@ -1,4 +1,4 @@
-### XPort合约部署在preprod上,相关合约的参数化配置以及demo运行配置如下：
+### The contracts of XPort are deployed on preprod. The parameterized configuration of the related contracts and the demo operation configuration are as follows：
 ```bash
 GROUP_NFT_SYMBOL=76c4659b1b328354e6bded80f25b8ea17521584fc9919ef54a3fe86c
 GROUP_NFT_NAME=47726f7570496e666f546f6b656e436f696e
@@ -9,8 +9,8 @@ XPORT_NONCE=2
 CHECK_TOKEN_SYMBOL=f8d1bd22ac8f74e2a12d872de3b1be413e1aab9e4a6c0c6c950cc05a
 CHECK_TOKEN_NAME=496e626f756e64436865636b436f696e
 ```
-### 注意：测试环境中GroupNFTHolder，AdminNFTHolder两个合约没有更新，后续逐步验证后才采用本项目中的编译的合约。
+### Note: In the test environment, the GroupNFTHolder and AdminNFTHolder contracts have not been updated. They will the update with the contracts from this project after be tested.
 GroupNFTHolder address: addr_test1wpm9vmfxjk0lcrcwzfx76zmcyxpfluux9cwppyu9639thycpks2wj
 AdminNFTHolder address: addr_test1wr6l68tfw8u73ag6regpz7987a73jcv7d274qwnsp7p2szg782txc
 
-测试环境部署合约的最终字节码在[此处中](compiled_appyparams_ouput/README.md) 
+The final bytecode of the deployed contract in the testing environment is [here](compiled_appyparams_ouput/README.md) 
