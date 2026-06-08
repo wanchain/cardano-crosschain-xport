@@ -58,7 +58,7 @@ demo/bridge_token(ScriptHash, AssetName) <-- owner script hash (inbound_handler 
 ## Shared types and utilities
 
 - **`lib/cross_chain/types.ak`** -- All shared types: `GroupInfoParams`, `AdminDatum`, `CrossMsgData`, `InboundProof`, `Beneficiary`, redeemer types, and token info records.
-- **`lib/cross_chain/utils.ak`** -- Helper functions: `get_group_info` (reads GroupNFT datum from reference inputs), `get_target_vh` (looks up validator hashes by index), `is_single_asset`, `value_at_address`, `outputs_at`, `total_input_value`.
+- **`lib/cross_chain/utils.ak`** -- Helper functions: `get_group_info` (reads GroupNFT datum from reference inputs), `get_target_vh` (looks up validator hashes by index), `has_token_strict`, `value_at_address`, `outputs_at`, `total_input_value`.
 
 ## Build
 

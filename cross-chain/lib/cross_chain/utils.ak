@@ -43,16 +43,19 @@ pub fn total_input_value(inputs: List<Input>, addr: Option<Address>) -> Value {
   )
 }
 
-/// Check if a Value contains only the specified token and ADA.
-/// No other tokens are allowed.
-pub fn is_single_asset(v: Value, cs: PolicyId, tk: AssetName) -> Bool {
-  flatten(v)
-    |> list.all(
-        fn(entry) {
-          let (cs2, tk2, _) = entry
-          cs2 == cs && tk2 == tk || cs2 == ada_policy_id && tk2 == ada_asset_name
-        },
-      )
+/// Check if a value contains at least a certain quantity of a specific token.
+pub fn has_token_strict(v: Value, cs: PolicyId, tk: AssetName) -> Bool {
+  let only_token_or_ada =
+    flatten(v)
+      |> list.all(
+          fn(entry) {
+            let (cs2, tk2, amount) = entry
+            (
+              cs2 == cs && tk2 == tk || cs2 == ada_policy_id && tk2 == ada_asset_name
+            ) && amount > 0
+          },
+        )
+  only_token_or_ada && quantity_of(v, cs, tk) > 0
 }
 
 /// Find the GroupInfoParams from a reference input holding the GroupNFT.

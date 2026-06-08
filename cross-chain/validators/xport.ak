@@ -1,7 +1,7 @@
 use aiken/collection/dict
 use aiken/collection/list
 use aiken/interval
-use cardano/address.{Address, VerificationKey}
+// use cardano/address.{Address, VerificationKey}
 use cardano/assets
 use cardano/transaction.{OutputReference, Transaction}
 use cross_chain/types.{KeyParam}

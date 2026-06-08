@@ -14,7 +14,7 @@ use cross_chain/types.{
   GroupAdminNFTCheckTokenInfo, GroupNFTTokenInfo, InboundCheckRedeemer,
   InboundMintCheckInfo, InboundProof, LocalAddress,
 }
-use cross_chain/utils.{get_group_info, get_param, is_single_asset}
+use cross_chain/utils.{get_group_info, get_param, has_token_strict}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -135,7 +135,7 @@ fn mint_spend_check(
         let amt =
           quantity_of(o.value, check.check_token_symbol, check.check_token_name)
         let single =
-          is_single_asset(
+          has_token_strict(
             o.value,
             check.check_token_symbol,
             check.check_token_name,
@@ -189,7 +189,7 @@ fn mint_spend_check(
 
   let check_output =
     when matching_outputs is {
-      [o] -> is_single_asset(o.value, mint_policy, target_vh)
+      [o] -> has_token_strict(o.value, mint_policy, target_vh)
       _ -> False
     }
 

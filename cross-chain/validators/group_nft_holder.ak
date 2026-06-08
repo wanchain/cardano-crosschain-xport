@@ -10,7 +10,7 @@ use cross_chain/types.{
   AdminNftTokenInfo, GroupAdminNFTInfo, GroupInfoParams, GroupNFTTokenInfo,
   param_oracle_worker, param_version,
 }
-use cross_chain/utils.{get_param, is_single_asset}
+use cross_chain/utils.{get_param, has_token_strict}
 
 /// GroupNFTHolder — spending validator for the GroupNFT UTxO
 ///
@@ -137,7 +137,7 @@ validator group_nft_holder(param: GroupAdminNFTInfo) {
     let version_vh = get_param(out_params, param_version)
 
     let b_single_asset =
-      is_single_asset(
+      has_token_strict(
         own_output.value,
         group.group_nft_symbol,
         group.group_nft_name,
@@ -371,7 +371,7 @@ fn validate_group_nft_holder(
   let ver_vh = get_param(out_params, param_version)
 
   let single_ok =
-    is_single_asset(
+    has_token_strict(
       own_output.value,
       group.group_nft_symbol,
       group.group_nft_name,
@@ -438,14 +438,14 @@ test test_rejects_unauthorized() {
 
 test test_output_has_token() {
   let ref = oref(0)
-  // A foreign policy mixed into the output value — is_single_asset should reject it
+  // A foreign policy mixed into the output value — has_token_strict should reject it
   let foreign_policy =
     #"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
   let foreign_name = #"666f726569676e"
   let bad_output =
     Output {
       address: script_addr(),
-      // GroupNFT present but also a foreign token → is_single_asset fails
+      // GroupNFT present but also a foreign token → has_token_strict fails
       value: assets.merge(
         assets.merge(
           assets.from_lovelace(2_000_000),

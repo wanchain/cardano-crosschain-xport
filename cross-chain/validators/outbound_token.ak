@@ -10,7 +10,7 @@ use cross_chain/types.{
   CrossMsgData, ForeignAddress, FunctionCallData, GroupInfoParams,
   GroupNFTTokenInfo, LocalAddress, OutboundTokenParams,
 }
-use cross_chain/utils.{get_group_info, get_param, is_single_asset}
+use cross_chain/utils.{get_group_info, get_param, has_token_strict}
 
 /// Minting policy for outbound tokens.
 ///
@@ -62,12 +62,21 @@ fn validate_outbound_token(
     expect LocalAddress(source_addr) = cross_msg.source_contract
 
     let single_asset_ok =
-      is_single_asset(holder_output.value, policy_id, token_name)
+      has_token_strict(holder_output.value, policy_id, token_name)
 
     let source_in_inputs =
       list.any(tx.inputs, fn(input) { input.output.address == source_addr })
+
+    let total_output_value =
+      list.foldl(
+        tx.outputs,
+        assets.zero,
+        fn(output_item, acc) { assets.merge(acc, output_item.value) },
+      )
+    let total_outbound_tokens =
+      quantity_of(total_output_value, policy_id, token_name)
     // for trace info
-    (mint_value == 1)? && single_asset_ok? && source_in_inputs?
+    (mint_value == 1)? && single_asset_ok? && source_in_inputs? && (total_outbound_tokens == 1)?
   }
 }
 
